@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.9.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="alternate" href="/atom.xml" title="Libery" type="application/atom+xml">
+  <meta name="google-site-verification" content="aB6L6QXfeQJ_kUJ1peNYbkbkVBGVB_PYD_WDaljjWGo">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/Thewhitelight/Thewhitelight.github.io.git').hostname,
+    root: '/',
+    scheme: 'Mist',
+    version: '7.5.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="一直在写代码,感觉总结反思比较少,自己的表达能力很欠缺,所以想把自己的一些经验记录下来,顺便理清思路.公司项目经历了一两年多的迭代,业务越来越复杂,由于是电商项目,有大量的图片需要加载,页面布局多样化,对 WebView 使用也很多,所以在内存方面开始出现较大的压力.在历经几个迭代处理相关问题后,现在首页 Tab 全部加载后内存比优化前内存使用减少40%,当打开十多个页面后,内存减少有30%以上,">
+<meta name="keywords" content="Android,性能调优">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android 内存优化实践(上)">
+<meta property="og:url" content="https://github.com/Thewhitelight/Thewhitelight.github.io.git/2018/09/03/android-memory-optimization/index.html">
+<meta property="og:site_name" content="Libery">
+<meta property="og:description" content="一直在写代码,感觉总结反思比较少,自己的表达能力很欠缺,所以想把自己的一些经验记录下来,顺便理清思路.公司项目经历了一两年多的迭代,业务越来越复杂,由于是电商项目,有大量的图片需要加载,页面布局多样化,对 WebView 使用也很多,所以在内存方面开始出现较大的压力.在历经几个迭代处理相关问题后,现在首页 Tab 全部加载后内存比优化前内存使用减少40%,当打开十多个页面后,内存减少有30%以上,">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-11-24T11:46:47.060Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android 内存优化实践(上)">
+<meta name="twitter:description" content="一直在写代码,感觉总结反思比较少,自己的表达能力很欠缺,所以想把自己的一些经验记录下来,顺便理清思路.公司项目经历了一两年多的迭代,业务越来越复杂,由于是电商项目,有大量的图片需要加载,页面布局多样化,对 WebView 使用也很多,所以在内存方面开始出现较大的压力.在历经几个迭代处理相关问题后,现在首页 Tab 全部加载后内存比优化前内存使用减少40%,当打开十多个页面后,内存减少有30%以上,">
+
+<link rel="canonical" href="https://github.com/Thewhitelight/Thewhitelight.github.io.git/2018/09/03/android-memory-optimization/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>Android 内存优化实践(上) | Libery</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Libery</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <h1 class="site-subtitle" itemprop="description">秋流到冬尽 春流到夏</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+  <a href="https://github.com/Thewhitelight" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/Thewhitelight/Thewhitelight.github.io.git/2018/09/03/android-memory-optimization/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Libery">
+      <meta itemprop="description" content="Libery 个人博客">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Libery">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          Android 内存优化实践(上)
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-09-03 15:13:44" itemprop="dateCreated datePublished" datetime="2018-09-03T15:13:44+08:00">2018-09-03</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-11-24 19:46:47" itemprop="dateModified" datetime="2019-11-24T19:46:47+08:00">2019-11-24</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/技术/" itemprop="url" rel="index">
+                    <span itemprop="name">技术</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>一直在写代码,感觉总结反思比较少,自己的表达能力很欠缺,所以想把自己的一些经验记录下来,顺便理清思路.<br>公司项目经历了一两年多的迭代,业务越来越复杂,由于是电商项目,有大量的图片需要加载,页面布局多样化,对 WebView 使用也很多,所以在内存方面开始出现较大的压力.在历经几个迭代处理相关问题后,现在首页 Tab 全部加载后内存比优化前内存使用减少40%,当打开十多个页面后,内存减少有30%以上,从 bugly 的日志来看已经没有 OOM 相关日志了,改进效果还是比较明显.<br><a id="more"></a></p>
+<h1 id="针对应用进行分析-优化前主要存在下面几个问题"><a href="#针对应用进行分析-优化前主要存在下面几个问题" class="headerlink" title="针对应用进行分析,优化前主要存在下面几个问题:"></a>针对应用进行分析,优化前主要存在下面几个问题:</h1><ol>
+<li>图片问题<ol>
+<li>图片内存回收不及时</li>
+<li>只有单份本地图片,但放置在 xhdpi 中,当高分辨率手机加载时,会占用较大内存</li>
+</ol>
+</li>
+<li>布局优化<ol>
+<li>自定义 View 时,在 xml 根布局使用 LinearLayout 之类,并且在代码里又继承相应的 ViewGroup,造成重复嵌套</li>
+<li>在复杂布局中嵌套过的多,RelativeLayout 使用也较多,影响布局测量绘制性能</li>
+<li>页面中未经常使用的 View 使用 Gone 隐藏,而未使用 ViewStub,影响绘制性能</li>
+</ol>
+</li>
+<li>某些 ViewPager 页面为使用懒加载</li>
+<li>某些页面可以递归调用,而未做任何限制,存在 OOM 风险</li>
+<li>复杂长页面使用 ScrollView,造成单页面内存消耗过大</li>
+<li>onDestroy 中为将全局变量置空,导致内存回收缓慢</li>
+<li>WebView<ol>
+<li>非 Web 页面嵌套 WebView,没做好内存释放处理,造成内存占用不能释放</li>
+<li>Web未使用独立进程,而 WebView 中 VR 展示,内存消耗严重</li>
+</ol>
+</li>
+</ol>
+<h1 id="反思"><a href="#反思" class="headerlink" title="反思"></a>反思</h1><p>有的问题是编码习惯问题,平时没有养成良好的习惯,导致代码维护越来越难做,补丁越打越多,对性能开始产生了影响.<br>有的问题是思考太少,着急写代码而没有考虑好应用场景,对后来的扩展和性能产生了影响.<br>有的则是自己水平不够,没有好好学习,意识不到存在问题.</p>
+<p>现在又让我想起了代码整洁之道里的那句话.<div class="note danger">
+            <p>让营地比你来时更干净 </p>
+          </div>以后在写代码时一定要默念,时刻警惕让其成为一种习惯,这样自己所犯的错误也就少一点.</p>
+<h1 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h1><h2 id="图片内存及时释放"><a href="#图片内存及时释放" class="headerlink" title="图片内存及时释放"></a>图片内存及时释放</h2><p>项目目前使用的是图片框架是 Glide3.7.0 版本,由于其他 library 也在依赖这个版本,所以目前还没有迁移到最新版本,打算抽空更新下,毕竟图片加载框架对于加载大量图片的应用还是很重要的,直接关乎体验和性能.Fresco 本身对于图片的请求、内存的优化和各种图形变换,有很好的支持和体验,但是由于其必须指定宽度或者高度,对于目前项目的迁移存在较大的障碍,目前不予考虑.</p>
+<p>在整合进项目中,我们使用自定义 ImageView,将 Glide 各种默认策略封装在 View 内,对外直提供默认的方法就可以使用,消除有多余配置,对于特殊的需求提供统一方法,进行自定义配置.简化调用逻辑.</p>
+<p>当在页面内滑动时,页面滑出屏幕,这时候 View 已经看不到,但是内存依旧在占用,而没有及时释放,而这样的的情况在打开页面较少时看起来无所谓,但是一旦 Activity 栈中有大量历史 Activity 而未销毁,就会给内存带来很大压力,<strong>雪崩时,没有一片雪花是无辜的</strong>.所以要防范这种情况的发生.如果首页就加载了大量的图片,占用过多内存,那么对于整个程序可使用的内存就会减少很多,用户随便进入多级页面,内存就快预警.</p>
+<p>经过上面的分析,及时释放图片占用的最好的时机就是 View 滑出时回收,显示出来时再加载.于是<code>onAttachedToWindow</code>和<code>onDetachedFromWindow</code>这两个 View 生命周期里的方法就起作用了.Activity 中的 onAttachedToWindow调用是在 onResume 之后调用,而 onDetachedFromWindow 调用是在 onDestroy 之后,所以当 Activity 增加时,历史 Activity 屏幕中的图片内存释放不掉,也是一个隐患点,但是配合业务逻辑不会出现特别多的 Activity 叠加的情况,还是可以接受,如果有必要这个点可以以后优化.<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SmartImageView</span> <span class="keyword">extends</span> <span class="title">AppCompatImageView</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    ··· 省略其他变量</span><br><span class="line">    <span class="keyword">private</span> String mUrl;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onAttachedToWindow</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>.onAttachedToWindow();</span><br><span class="line">        onAttach();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onDetachedFromWindow</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>.onDetachedFromWindow();</span><br><span class="line">        onDetach();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//当Viwe可见时,将图片重新加载</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">onAttach</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        setImageUrl(mUrl);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//将图片不可见时,及时清除View的图片</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">onDetach</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        setImageDrawable(<span class="keyword">null</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">//只是示例方法,所以很简单的描述清楚原理,对于服务器返回图片的尺寸后,根据View真是大小,计算缩放比例,使用override去加载在屏幕实际尺寸,减少不必要的内存消耗</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setImageUrl</span><span class="params">(String url)</span></span>&#123;</span><br><span class="line">        DrawableRequestBuilder&lt;String&gt; builder = Glide.with(getContext().getApplicationContext())</span><br><span class="line">                    .load(url)</span><br><span class="line">                    .dontAnimate()<span class="comment">//有的机型出现图片后出现偏移,故去掉加载动画,便恢复正常</span></span><br><span class="line">                    .fitCenter();</span><br><span class="line">            <span class="comment">//不能使用builder.into(this) 以为Context使用ApplicationContext,所以有可能此时view销毁,而图片加载成功后,导致内存泄漏</span></span><br><span class="line">            builder.into(<span class="keyword">new</span> SimpleTarget&lt;GlideDrawable&gt;() &#123;</span><br><span class="line">                <span class="meta">@Override</span></span><br><span class="line">                <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onResourceReady</span><span class="params">(GlideDrawable resource, GlideAnimation&lt;? <span class="keyword">super</span> GlideDrawable&gt; glideAnimation)</span> </span>&#123;</span><br><span class="line">                    <span class="keyword">if</span> (resource != <span class="keyword">null</span> &amp;&amp; getContext() != <span class="keyword">null</span>) &#123;</span><br><span class="line">                        setImageDrawable(resource);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这样就可以保证图片在滑出屏幕后内存得到及时的回收,而不用等到界面销毁后才能回收图片内存.最大限度的降低图片对于内存的压力.<br>对于 Android 8.0 以上图片不再使用堆存放,而是分配在 Native 中,并且 <strong>不需要用户手动回收、不受应用内存分配限制</strong>,对于多应用来说真是莫大的好消息,虽然不受最大堆限制,但是当 Native 内存过大也会造成系统层面的 OOM,而且应用本身不会捕获此异常. 在 Android 2.3 以下图片内存分配也是这样的逻辑,由于不能回收不及时所以废弃不使用,但是在 Android 8.0 加入一种自动回收 Native 內存的 NativeAllocationRegistry机制,对开发者而言是透明的.不用手动回收所分配的内存.</p>
+<h2 id="本地图片处理"><a href="#本地图片处理" class="headerlink" title="本地图片处理"></a>本地图片处理</h2><ul>
+<li>对于本地资源图片需要尽量压缩,设计师给过来就直接放进项目了,再次检查时发现有的图片较大,当载入时会占用更多内存.</li>
+<li>对于图片格式可以转换 webp,这种编码格式在大小和质量有很好的平衡,在 Android4.2 版本以上解决了有关bug,可以放心使用,当然可以使用第三方支持到 Android4.1 版本.</li>
+<li>对于尺寸较大的图片可以放入 xxhdpi,如果将高分辨率图片放入低密度目录，将会造成低端机占用较大内存可能造成 OOM.<h2 id="布局优化"><a href="#布局优化" class="headerlink" title="布局优化"></a>布局优化</h2></li>
+<li>开发中经常有多个 View 组合,简化 Activity 中代码的逻辑,可以在多个页面复用,比如有时会继承 LinearLayout 然后在构造方法里用 LayouInfflate r将 xml 布局代码加载进来,这个方式看似没有毛病,原来也经常这么写,但是在使用 Layout Inspector 分析布局时发现造成了不必要的嵌套,所以需要改变方式.<ul>
+<li>继承各种 Layout 后直接new出所需要的 widget,但是这样不利于直观的分析布局,并且存在大量的 java 代码,很费力.</li>
+<li>继承各种 Layout 后并且使用 LayoutInflater 加载 xml 布局,但是 xml 布局里使用 merge,这样就可以减少一层布局嵌套.<br>相比较而言第二种方式更方便、更直观和符合习惯,我们也采用第二种方式.<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">merge</span> <span class="attr">xmlns:android</span>=<span class="string">"http://schemas.android.com/apk/res/android"</span></span></span><br><span class="line"><span class="tag">    <span class="attr">xmlns:tools</span>=<span class="string">"http://schemas.android.com/tools"</span></span></span><br><span class="line"><span class="tag">    <span class="attr">tools:layout_height</span>=<span class="string">"match_parent"</span></span></span><br><span class="line"><span class="tag">    <span class="attr">tools:layout_width</span>=<span class="string">"match_parent"</span></span></span><br><span class="line"><span class="tag">    <span class="attr">tools:parentTag</span>=<span class="string">"android.widget.FrameLayout"</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">merge</span>&gt;</span></span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+</ul>
+<p>使用 parentTag 指定当前布局的是哪种类型.这样做可以实时预览效果,但是根布局的属性都要在 java 代码指定.</p>
+<ul>
+<li>Google 在 2016 I/O 大会上推出 ConstrainLayout 布局.解决了复杂布局使用各种 Layouts 互相嵌套的问题,可以让布局更加扁平化,对于现在开发使用 LinearLayout, FrameLayout 和 ConstrainLayout 完全足以.具体的用法可以参考<a href="https://developer.android.com/training/constraint-layout/" target="_blank" rel="noopener">ConstrainLayout Guide</a>.</li>
+<li><p>打开一个新Activity并且请求网络时,就会出现四种状态:加载中、显示内容、显示错误、显示空页面,对于不经常显示的错误和空页面我们在 Activity 根布局中却一直解析,只是调用 setVisible(GONE),消耗了不必要的性能和内存.因此使用 ViewStub 可以很好的解决这个问题,这个 ViewStub 相当于懒加载,只有记载它时才会初始化,否则不会解析. ViewStub 不能应用 merge 标签.这个特性很适合在首页弹出促销的 WebView,平时不需要加载节省内存.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">((ViewStub) findViewById(R.id.my_layout)).setVisibility(View.VISIBLE);</span><br><span class="line"><span class="comment">// 或者</span></span><br><span class="line">View importPanel = ((ViewStub) findViewById(R.id.my_layout)).inflate();</span><br></pre></td></tr></table></figure>
+  <figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!--  android:layout 指定所要加载的布局--&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">ViewStub</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:id</span>=<span class="string">"@+id/stub_home_web"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:layout_width</span>=<span class="string">"match_parent"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:layout_height</span>=<span class="string">"match_parent"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:background</span>=<span class="string">"@android:color/transparent"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:layout</span>=<span class="string">"@layout/layout_web"</span> /&gt;</span></span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h1 id="Android-Profiler"><a href="#Android-Profiler" class="headerlink" title="Android Profiler"></a>Android Profiler</h1><p>内存优化是个任重道远的的过程,需要不断的验证观察,Android Studio 提供了强大的性能分析工具,在 Android Profiler 里可以很方便的观察和分析 CPU、内存和网络的状态.<a href="https://developer.android.google.cn/studio/profile/memory-profiler" target="_blank" rel="noopener">Android Profiler 使用参考</a>里面具体用法,可以帮助我们发现各种潜在问题.</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Android/" rel="tag"># Android</a>
+              <a href="/tags/性能调优/" rel="tag"># 性能调优</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/08/31/flutter-douban-2/" rel="prev" title="Flutter 体验二(package开发)">
+      <i class="fa fa-chevron-left"></i> Flutter 体验二(package开发)
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/09/10/android-memory-optimization-2/" rel="next" title="Android 内存优化实践(中)">
+      Android 内存优化实践(中) <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    
+  <div class="comments" id="comments">
+    <div id="lv-container" data-id="city" data-uid="MTAyMC8zOTM2OS8xNTg5Ng"></div>
+  </div>
+  
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#针对应用进行分析-优化前主要存在下面几个问题"><span class="nav-number">1.</span> <span class="nav-text">针对应用进行分析,优化前主要存在下面几个问题:</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#反思"><span class="nav-number">2.</span> <span class="nav-text">反思</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#解决方案"><span class="nav-number">3.</span> <span class="nav-text">解决方案</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#图片内存及时释放"><span class="nav-number">3.1.</span> <span class="nav-text">图片内存及时释放</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#本地图片处理"><span class="nav-number">3.2.</span> <span class="nav-text">本地图片处理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#布局优化"><span class="nav-number">3.3.</span> <span class="nav-text">布局优化</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Android-Profiler"><span class="nav-number">4.</span> <span class="nav-text">Android Profiler</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Libery</p>
+  <div class="site-description" itemprop="description">Libery 个人博客</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">27</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="feed-link motion-element">
+    <a href="/atom.xml" rel="alternate">
+      <i class="fa fa-rss"></i>RSS
+    </a>
+  </div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Thewhitelight" title="GitHub → https://github.com/Thewhitelight"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:szq921618920@gmail.com" title="E-Mail → mailto:szq921618920@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 2018 – 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Libery</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://mist.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> v7.5.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script>
+<script src="/js/schemes/muse.js"></script>
+<script src="/js/next-boot.js"></script>
+
+
+
+  
+
+
+
+
+  <script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+  window.livereOptions = {
+    refer: location.pathname.replace(CONFIG.root, '').replace('index.html', '')
+  };
+  (function(d, s) {
+    var j, e = d.getElementsByTagName(s)[0];
+    if (typeof LivereTower === 'function') { return; }
+    j = d.createElement(s);
+    j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+    j.async = true;
+    e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+</script>
+
+</body>
+</html>

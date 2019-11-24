@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.9.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="alternate" href="/atom.xml" title="Libery" type="application/atom+xml">
+  <meta name="google-site-verification" content="aB6L6QXfeQJ_kUJ1peNYbkbkVBGVB_PYD_WDaljjWGo">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/Thewhitelight/Thewhitelight.github.io.git').hostname,
+    root: '/',
+    scheme: 'Mist',
+    version: '7.5.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="进入全面屏时代,iPhone 的交互是业界标杆,所以Android阵营都向其靠拢.小米全面屏手势是我挺喜欢的交互.所以模仿下小米的返回操作.其返回逻辑远不如微信返回动画复杂,几乎没有机型适配问题的存在.">
+<meta name="keywords" content="Android">
+<meta property="og:type" content="article">
+<meta property="og:title" content="仿小米返回交互">
+<meta property="og:url" content="https://github.com/Thewhitelight/Thewhitelight.github.io.git/2018/09/28/android-slideback/index.html">
+<meta property="og:site_name" content="Libery">
+<meta property="og:description" content="进入全面屏时代,iPhone 的交互是业界标杆,所以Android阵营都向其靠拢.小米全面屏手势是我挺喜欢的交互.所以模仿下小米的返回操作.其返回逻辑远不如微信返回动画复杂,几乎没有机型适配问题的存在.">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://def-201655.cos.ap-shanghai.myqcloud.com/7g4t2-ihykn.gif">
+<meta property="og:image" content="https://def-201655.cos.ap-shanghai.myqcloud.com/bezier_3.png">
+<meta property="og:image" content="https://def-201655.cos.ap-shanghai.myqcloud.com/bezier_6.png">
+<meta property="og:image" content="https://api.bintray.com/packages/light/Avatar/SlideBack/images/download.svg">
+<meta property="og:updated_time" content="2019-11-24T11:46:47.050Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="仿小米返回交互">
+<meta name="twitter:description" content="进入全面屏时代,iPhone 的交互是业界标杆,所以Android阵营都向其靠拢.小米全面屏手势是我挺喜欢的交互.所以模仿下小米的返回操作.其返回逻辑远不如微信返回动画复杂,几乎没有机型适配问题的存在.">
+<meta name="twitter:image" content="https://def-201655.cos.ap-shanghai.myqcloud.com/7g4t2-ihykn.gif">
+
+<link rel="canonical" href="https://github.com/Thewhitelight/Thewhitelight.github.io.git/2018/09/28/android-slideback/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>仿小米返回交互 | Libery</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Libery</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <h1 class="site-subtitle" itemprop="description">秋流到冬尽 春流到夏</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+  <a href="https://github.com/Thewhitelight" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/Thewhitelight/Thewhitelight.github.io.git/2018/09/28/android-slideback/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Libery">
+      <meta itemprop="description" content="Libery 个人博客">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Libery">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          仿小米返回交互
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-09-28 23:37:35" itemprop="dateCreated datePublished" datetime="2018-09-28T23:37:35+08:00">2018-09-28</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-11-24 19:46:47" itemprop="dateModified" datetime="2019-11-24T19:46:47+08:00">2019-11-24</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/技术/" itemprop="url" rel="index">
+                    <span itemprop="name">技术</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>进入全面屏时代,iPhone 的交互是业界标杆,所以Android阵营都向其靠拢.小米全面屏手势是我挺喜欢的交互.所以模仿下小米的返回操作.其返回逻辑远不如微信返回动画复杂,几乎没有机型适配问题的存在.<br><a id="more"></a><br>动画效果如图<br><img src="https://def-201655.cos.ap-shanghai.myqcloud.com/7g4t2-ihykn.gif" alt></p>
+<p>看到动画效果我们需要达到的效果是在 Activity 的 DecorView 上绘制此 View,所以就像当于我们所有页面的的根布局需要添加此 View,如果每个页面都手动添加,则显得太过麻烦,显然在抽象的 BaseActivity 中 setContentView 方法之后调用<code>activity.getWindow().getDecorView()</code>,然后获取 content 根布局<code>FrameLayout content = viewGroup.findViewById(android.R.id.content); content.addView(slideBackView);</code>将我们带有返回 View 的布局添加到 FameLayout 的顶层,这样就达到的最小化的修改代码实现效果.</p>
+<h1 id="对于返回图形的绘制-主要运用了触摸事件、贝塞尔曲线等知识点"><a href="#对于返回图形的绘制-主要运用了触摸事件、贝塞尔曲线等知识点" class="headerlink" title="对于返回图形的绘制,主要运用了触摸事件、贝塞尔曲线等知识点"></a>对于返回图形的绘制,主要运用了触摸事件、贝塞尔曲线等知识点</h1><ul>
+<li>触摸事件,在 View 内重写 onTouchEvent 方法,判断左右滑动并且根据滑动距离绘制返回图形宽度</li>
+<li>对于返回图形可以余弦公式,也使用贝塞尔曲线画成,但贝塞尔曲线看起来更加顺滑自然,但是 Android 原生最高支持三阶,对于我们所要绘制的图形三阶会不够自然,使用六阶会比较好,但是又不支持,所以只能由三个二阶组合成返回图形<br><img src="https://def-201655.cos.ap-shanghai.myqcloud.com/bezier_3.png" alt="三阶贝塞尔曲线"><br><img src="https://def-201655.cos.ap-shanghai.myqcloud.com/bezier_6.png" alt="六阶贝塞尔曲线"></li>
+</ul>
+<h2 id="View触摸事件"><a href="#View触摸事件" class="headerlink" title="View触摸事件"></a>View触摸事件</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//左边视差阈值,为 View 的 1/3</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">float</span> thresholdLeft;</span><br><span class="line"><span class="comment">//右边边视差阈值,为 View 的 2/3</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">float</span> thresholdRight;</span><br><span class="line"><span class="comment">//返回图形的最大宽度</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">float</span> backMaxWidth;</span><br><span class="line"><span class="comment">//绘制返回图形的最小边距</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">float</span> backEdgeWidth;</span><br><span class="line"><span class="comment">//视差的变量</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">float</span> bufferX;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">onTouchEvent</span><span class="params">(MotionEvent ev)</span> </span>&#123;</span><br><span class="line">        <span class="comment">//当前动作下 View 的X坐标点,不能用 getRawX,否则获取的是屏幕上的坐标</span></span><br><span class="line">        <span class="keyword">float</span> currentX = ev.getX();</span><br><span class="line">        currentY = ev.getY();</span><br><span class="line">        <span class="keyword">switch</span> (ev.getAction()) &#123;</span><br><span class="line">            <span class="keyword">case</span> MotionEvent.ACTION_DOWN:</span><br><span class="line">                <span class="comment">//按下时 View 的X坐标点</span></span><br><span class="line">                downX = ev.getX();</span><br><span class="line">                forwardX = downX;</span><br><span class="line">                <span class="keyword">if</span> (downX &lt;= backEdgeWidth) &#123;</span><br><span class="line">                <span class="comment">//当按下的X坐标&lt;最小触发边距时,认为有效触发绘制逻辑并绘制左边返回图形</span></span><br><span class="line">                    isEdge = <span class="keyword">true</span>;</span><br><span class="line">                    left = <span class="keyword">true</span>;</span><br><span class="line">                    right = <span class="keyword">false</span>;</span><br><span class="line">                &#125; <span class="keyword">else</span> <span class="keyword">if</span> (downX &gt;= getWidth() - backEdgeWidth) &#123;</span><br><span class="line">                <span class="comment">//当按下的X坐标&gt;(View 宽度-最小触发边距)时,认为有效触发绘制逻辑并绘制右边返回图形</span></span><br><span class="line">                    isEdge = <span class="keyword">true</span>;</span><br><span class="line">                    right = <span class="keyword">true</span>;</span><br><span class="line">                    left = <span class="keyword">false</span>;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            <span class="keyword">case</span> MotionEvent.ACTION_MOVE:</span><br><span class="line">                <span class="comment">//当前滑动到的点与按下时的点X坐标的距离</span></span><br><span class="line">                deltaX = currentX - downX;</span><br><span class="line">                <span class="comment">//滑动距离 判断连续滑动时的方向</span></span><br><span class="line">                <span class="keyword">float</span> diff = forwardX - currentX;</span><br><span class="line">                <span class="keyword">if</span> (diff &gt; <span class="number">0</span>) &#123;</span><br><span class="line">                    <span class="comment">//向左滑动</span></span><br><span class="line">                    <span class="keyword">if</span> (currentX &lt; thresholdLeft &amp;&amp; left) &#123;</span><br><span class="line">                        <span class="comment">//当绘制左边图形、向左滑动时、当前小于屏幕1/3处时,绘制时差效果</span></span><br><span class="line">                        deltaX = backMaxWidth;</span><br><span class="line">                        deltaX -= (thresholdLeft - currentX) / <span class="number">2</span>;</span><br><span class="line">                        bufferX = deltaX;</span><br><span class="line">                        <span class="keyword">if</span> (deltaX &lt; <span class="number">0</span>) &#123;</span><br><span class="line">                            deltaX = <span class="number">0</span>;</span><br><span class="line">                            bufferX = <span class="number">0</span>;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125; <span class="keyword">else</span> <span class="keyword">if</span> ((currentX &gt; thresholdRight) &amp;&amp; right) &#123;</span><br><span class="line">                        <span class="comment">//当绘制右边图形、向左滑动时、当前大于屏幕2/3处时,绘制时差效果</span></span><br><span class="line">                         bufferX -= diff;</span><br><span class="line">                         deltaX = bufferX;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    <span class="comment">//向右滑动</span></span><br><span class="line">                    <span class="keyword">if</span> ((currentX &lt; thresholdLeft) &amp;&amp; left) &#123;</span><br><span class="line">                        <span class="comment">//当绘制左边图形、向右滑动时、当前小于屏幕1/3处时,绘制时差效果</span></span><br><span class="line">                        bufferX += Math.abs(diff);</span><br><span class="line">                        deltaX = bufferX;</span><br><span class="line">                    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (currentX &gt; thresholdRight &amp;&amp; right) &#123;</span><br><span class="line">                         <span class="comment">//当绘制右边边图形、向右滑动时、当前大于屏幕2/3处时,绘制时差效果</span></span><br><span class="line">                        deltaX = -backMaxWidth;</span><br><span class="line">                        deltaX += (currentX - thresholdRight) / <span class="number">2</span>;</span><br><span class="line">                        bufferX = deltaX;</span><br><span class="line">                        <span class="keyword">if</span> (deltaX &lt; -backMaxWidth) &#123;</span><br><span class="line">                            deltaX = -backMaxWidth;</span><br><span class="line">                            bufferX = -backMaxWidth;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="comment">//记录当前滑动的X坐标,与下次滑动点做比较</span></span><br><span class="line">                forwardX = currentX;</span><br><span class="line">                <span class="keyword">if</span> (isEdge) &#123;</span><br><span class="line">                    invalidate();</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            <span class="keyword">case</span> MotionEvent.ACTION_UP:</span><br><span class="line">                <span class="keyword">if</span> (isEdge) &#123;</span><br><span class="line">                    <span class="keyword">if</span> (deltaX &gt;= backMaxWidth &amp;&amp; left) &#123;</span><br><span class="line">                        <span class="comment">//当绘图形宽度为最大时并抬起,表示返回</span></span><br><span class="line">                        back();</span><br><span class="line">                    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (Math.abs(deltaX) &gt;= backMaxWidth &amp;&amp; right) &#123;</span><br><span class="line">                        <span class="keyword">if</span> (!isOnlyLeftBack) &#123;</span><br><span class="line">                            <span class="comment">//如果绘制右边时,出发返回逻辑</span></span><br><span class="line">                            back();</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                    deltaX = <span class="number">0</span>;</span><br><span class="line">                    invalidate();</span><br><span class="line">                &#125;</span><br><span class="line">                left = <span class="keyword">false</span>;</span><br><span class="line">                right = <span class="keyword">false</span>;</span><br><span class="line">                isEdge = <span class="keyword">false</span>;</span><br><span class="line">                bufferX = <span class="number">0</span>;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            <span class="keyword">default</span>:</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> isEdge;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>通过以上代码,分析了手势与绘制图形的关系,具体逻辑可以根据效果分析,视差部分的效果可以根据自身进行调整.</p>
+<h2 id="贝塞尔曲线绘制"><a href="#贝塞尔曲线绘制" class="headerlink" title="贝塞尔曲线绘制"></a>贝塞尔曲线绘制</h2><p>使用贝塞尔曲线绘制返回图形和里面的返回图标.<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line">    <span class="comment">//返回图形画笔</span></span><br><span class="line">    <span class="keyword">private</span> Paint backPaint;</span><br><span class="line">    <span class="comment">//返回图标画笔</span></span><br><span class="line">    <span class="keyword">private</span> Paint arrowPaint;</span><br><span class="line">    <span class="comment">//返回图形路径</span></span><br><span class="line">    <span class="keyword">private</span> Path backPath;</span><br><span class="line">    <span class="comment">//返回图标路径</span></span><br><span class="line">    <span class="keyword">private</span> Path arrowPath;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">init</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        backPath = <span class="keyword">new</span> Path();</span><br><span class="line">        arrowPath = <span class="keyword">new</span> Path();</span><br><span class="line"></span><br><span class="line">        backPaint = <span class="keyword">new</span> Paint(Paint.ANTI_ALIAS_FLAG);</span><br><span class="line">        backPaint.setColor(<span class="number">0xAA000000</span>);</span><br><span class="line">        backPaint.setStyle(Paint.Style.FILL_AND_STROKE);</span><br><span class="line"></span><br><span class="line">        arrowPaint = <span class="keyword">new</span> Paint(Paint.ANTI_ALIAS_FLAG);</span><br><span class="line">        arrowPaint.setColor(Color.WHITE);</span><br><span class="line">        arrowPaint.setStyle(Paint.Style.STROKE);</span><br><span class="line">        arrowPaint.setStrokeWidth(<span class="number">6</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onDraw</span><span class="params">(Canvas canvas)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>.onDraw(canvas);</span><br><span class="line">        <span class="comment">//当deltaX超过最大距离时,设置为最大距离</span></span><br><span class="line">        <span class="keyword">if</span> (deltaX &gt; backMaxWidth &amp;&amp; left) &#123;</span><br><span class="line">            deltaX = backMaxWidth;</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (deltaX &lt; -backMaxWidth &amp;&amp; right) &#123;</span><br><span class="line">            deltaX = -backMaxWidth;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//初始化绘制坐标点Y</span></span><br><span class="line">        <span class="keyword">float</span> deltaY = currentY - backViewHeight / <span class="number">2</span>;</span><br><span class="line">        backPath.reset();</span><br><span class="line">        arrowPath.reset();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (deltaX &gt; <span class="number">0</span> &amp;&amp; left) &#123;</span><br><span class="line">            backPath.moveTo(<span class="number">0</span>, deltaY);</span><br><span class="line">            backPath.quadTo(<span class="number">0</span>, backViewHeight / <span class="number">4</span> + deltaY, deltaX / <span class="number">3</span>, backViewHeight * <span class="number">3</span> / <span class="number">8</span> + deltaY);</span><br><span class="line">            backPath.quadTo(deltaX * <span class="number">5</span> / <span class="number">8</span>, backViewHeight / <span class="number">2</span> + deltaY, deltaX / <span class="number">3</span>, backViewHeight * <span class="number">5</span> / <span class="number">8</span> + deltaY);</span><br><span class="line">            backPath.quadTo(<span class="number">0</span>, backViewHeight * <span class="number">6</span> / <span class="number">8</span> + deltaY, <span class="number">0</span>, backViewHeight + deltaY);</span><br><span class="line">            canvas.drawPath(backPath, backPaint);</span><br><span class="line"></span><br><span class="line">            arrowPath.moveTo(deltaX / <span class="number">6</span> + (<span class="number">15</span> * (deltaX / (width / <span class="number">6</span>))), backViewHeight * <span class="number">15</span> / <span class="number">32</span> + deltaY);</span><br><span class="line">            arrowPath.lineTo(deltaX / <span class="number">6</span>, backViewHeight * <span class="number">16.1f</span> / <span class="number">32</span> + deltaY);</span><br><span class="line">            arrowPath.moveTo(deltaX / <span class="number">6</span>, backViewHeight * <span class="number">15.9f</span> / <span class="number">32</span> + deltaY);</span><br><span class="line">            arrowPath.lineTo(deltaX / <span class="number">6</span> + (<span class="number">15</span> * (deltaX / (width / <span class="number">6</span>))), backViewHeight * <span class="number">17</span> / <span class="number">32</span> + deltaY);</span><br><span class="line">            canvas.drawPath(arrowPath, arrowPaint);</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (deltaX &lt; <span class="number">0</span> &amp;&amp; right) &#123;</span><br><span class="line">            <span class="keyword">if</span> (!isOnlyLeftBack) &#123;</span><br><span class="line">                deltaX = Math.abs(deltaX);</span><br><span class="line">                backPath.moveTo(width, deltaY);</span><br><span class="line">                backPath.quadTo(width, backViewHeight / <span class="number">4</span> + deltaY, width - deltaX / <span class="number">3</span>, backViewHeight * <span class="number">3</span> / <span class="number">8</span> + deltaY);</span><br><span class="line">                backPath.quadTo(width - deltaX * <span class="number">5</span> / <span class="number">8</span>, backViewHeight / <span class="number">2</span> + deltaY, width - deltaX / <span class="number">3</span>, backViewHeight * <span class="number">5</span> / <span class="number">8</span> + deltaY);</span><br><span class="line">                backPath.quadTo(width, backViewHeight * <span class="number">6</span> / <span class="number">8</span> + deltaY, width, backViewHeight + deltaY);</span><br><span class="line">                canvas.drawPath(backPath, backPaint);</span><br><span class="line"></span><br><span class="line">                arrowPath.moveTo(width - deltaX / <span class="number">6</span> - (<span class="number">15</span> * (deltaX / (width / <span class="number">6</span>))), backViewHeight * <span class="number">15</span> / <span class="number">32</span> + deltaY);</span><br><span class="line">                arrowPath.lineTo(width - deltaX / <span class="number">6</span>, backViewHeight * <span class="number">16.1f</span> / <span class="number">32</span> + deltaY);</span><br><span class="line">                arrowPath.moveTo(width - deltaX / <span class="number">6</span>, backViewHeight * <span class="number">15.9f</span> / <span class="number">32</span> + deltaY);</span><br><span class="line">                arrowPath.lineTo(width - deltaX / <span class="number">6</span> - (<span class="number">15</span> * (deltaX / (width / <span class="number">6</span>))), backViewHeight * <span class="number">17</span> / <span class="number">32</span> + deltaY);</span><br><span class="line">                canvas.drawPath(arrowPath, arrowPaint);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        setAlpha(deltaX / backMaxWidth);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>返回图形及返回坐标的形状都可以通过这是不同的结束点和控制点去调节,形成自己想要的效果,不过最好先通过绘图软件,分析好想要的图形及其绘制比例.</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>SlideBack用法<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//setContent(layoutResID) 替换为</span></span><br><span class="line">SlideBack.Builder().init(layoutResID).build(<span class="keyword">this</span>)</span><br></pre></td></tr></table></figure></p>
+<p>使用自定义 View 可以作出各种设计师想实现的动画效果,一般使用 onTouchEvent、onMeasure、onLayout、onDraw 等方法,根据实际情况重写这些方法即可实现.通过实现这个效果可以更好的理解 Android 中各种设计,提升自己开发水平.</p>
+<h1 id="项目地址"><a href="#项目地址" class="headerlink" title="项目地址"></a>项目地址</h1><p><a href="https://github.com/Thewhitelight/Tinder">GitHub项目地址</a> 里面有一些 library 集合<br><code>cn.libery:slideback:latest</code><br><a href="https://bintray.com/light/Avatar/SlideBack/_latestVersion" target="_blank" rel="noopener"> <img src="https://api.bintray.com/packages/light/Avatar/SlideBack/images/download.svg" alt="Maven"> </a> </p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Android/" rel="tag"># Android</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/09/13/android-memory-optimization-3/" rel="prev" title="Android 内存优化实践(下)">
+      <i class="fa fa-chevron-left"></i> Android 内存优化实践(下)
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/12/04/notification-8-0-sound/" rel="next" title="Android 8.0 自定义通知铃声">
+      Android 8.0 自定义通知铃声 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    
+  <div class="comments" id="comments">
+    <div id="lv-container" data-id="city" data-uid="MTAyMC8zOTM2OS8xNTg5Ng"></div>
+  </div>
+  
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#对于返回图形的绘制-主要运用了触摸事件、贝塞尔曲线等知识点"><span class="nav-number">1.</span> <span class="nav-text">对于返回图形的绘制,主要运用了触摸事件、贝塞尔曲线等知识点</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#View触摸事件"><span class="nav-number">1.1.</span> <span class="nav-text">View触摸事件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#贝塞尔曲线绘制"><span class="nav-number">1.2.</span> <span class="nav-text">贝塞尔曲线绘制</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">2.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#项目地址"><span class="nav-number">3.</span> <span class="nav-text">项目地址</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Libery</p>
+  <div class="site-description" itemprop="description">Libery 个人博客</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">27</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="feed-link motion-element">
+    <a href="/atom.xml" rel="alternate">
+      <i class="fa fa-rss"></i>RSS
+    </a>
+  </div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Thewhitelight" title="GitHub → https://github.com/Thewhitelight"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:szq921618920@gmail.com" title="E-Mail → mailto:szq921618920@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 2018 – 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Libery</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://mist.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> v7.5.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script>
+<script src="/js/schemes/muse.js"></script>
+<script src="/js/next-boot.js"></script>
+
+
+
+  
+
+
+
+
+  <script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+  window.livereOptions = {
+    refer: location.pathname.replace(CONFIG.root, '').replace('index.html', '')
+  };
+  (function(d, s) {
+    var j, e = d.getElementsByTagName(s)[0];
+    if (typeof LivereTower === 'function') { return; }
+    j = d.createElement(s);
+    j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+    j.async = true;
+    e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+</script>
+
+</body>
+</html>

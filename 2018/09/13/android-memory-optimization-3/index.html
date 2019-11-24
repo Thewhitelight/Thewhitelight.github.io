@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.9.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="alternate" href="/atom.xml" title="Libery" type="application/atom+xml">
+  <meta name="google-site-verification" content="aB6L6QXfeQJ_kUJ1peNYbkbkVBGVB_PYD_WDaljjWGo">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/Thewhitelight/Thewhitelight.github.io.git').hostname,
+    root: '/',
+    scheme: 'Mist',
+    version: '7.5.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="Web 独立进程一般应用中会大量使用网页,我们项目由于有家装 VR 页面,如果都放在主进程则会造成大量的内存占用,因此将 WebView 拆分为独立进程运行,从而减轻主进程内存压力很有必要,当内存紧张时,系统则会自动杀死 web 进程.拆分为多进程后,主要问题在于进程间通讯与主进程保活. 拆分 Web 进程独立进程分为两种模式,私有独立进程 和 全局独立进程 两种模式,开始方式也很简单.12345">
+<meta name="keywords" content="Android,性能调优">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android 内存优化实践(下)">
+<meta property="og:url" content="https://github.com/Thewhitelight/Thewhitelight.github.io.git/2018/09/13/android-memory-optimization-3/index.html">
+<meta property="og:site_name" content="Libery">
+<meta property="og:description" content="Web 独立进程一般应用中会大量使用网页,我们项目由于有家装 VR 页面,如果都放在主进程则会造成大量的内存占用,因此将 WebView 拆分为独立进程运行,从而减轻主进程内存压力很有必要,当内存紧张时,系统则会自动杀死 web 进程.拆分为多进程后,主要问题在于进程间通讯与主进程保活. 拆分 Web 进程独立进程分为两种模式,私有独立进程 和 全局独立进程 两种模式,开始方式也很简单.12345">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-11-24T11:46:47.050Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android 内存优化实践(下)">
+<meta name="twitter:description" content="Web 独立进程一般应用中会大量使用网页,我们项目由于有家装 VR 页面,如果都放在主进程则会造成大量的内存占用,因此将 WebView 拆分为独立进程运行,从而减轻主进程内存压力很有必要,当内存紧张时,系统则会自动杀死 web 进程.拆分为多进程后,主要问题在于进程间通讯与主进程保活. 拆分 Web 进程独立进程分为两种模式,私有独立进程 和 全局独立进程 两种模式,开始方式也很简单.12345">
+
+<link rel="canonical" href="https://github.com/Thewhitelight/Thewhitelight.github.io.git/2018/09/13/android-memory-optimization-3/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>Android 内存优化实践(下) | Libery</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Libery</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <h1 class="site-subtitle" itemprop="description">秋流到冬尽 春流到夏</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+  <a href="https://github.com/Thewhitelight" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/Thewhitelight/Thewhitelight.github.io.git/2018/09/13/android-memory-optimization-3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Libery">
+      <meta itemprop="description" content="Libery 个人博客">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Libery">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          Android 内存优化实践(下)
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-09-13 22:35:04" itemprop="dateCreated datePublished" datetime="2018-09-13T22:35:04+08:00">2018-09-13</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-11-24 19:46:47" itemprop="dateModified" datetime="2019-11-24T19:46:47+08:00">2019-11-24</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/技术/" itemprop="url" rel="index">
+                    <span itemprop="name">技术</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="Web-独立进程"><a href="#Web-独立进程" class="headerlink" title="Web 独立进程"></a>Web 独立进程</h1><p>一般应用中会大量使用网页,我们项目由于有家装 VR 页面,如果都放在主进程则会造成大量的内存占用,因此将 WebView 拆分为独立进程运行,从而减轻主进程内存压力很有必要,当内存紧张时,系统则会自动杀死 web 进程.拆分为多进程后,主要问题在于进程间通讯与主进程保活.</p>
+<h2 id="拆分-Web-进程"><a href="#拆分-Web-进程" class="headerlink" title="拆分 Web 进程"></a>拆分 Web 进程</h2><p>独立进程分为两种模式,<strong>私有独立进程</strong> 和 <strong>全局独立进程</strong> 两种模式,开始方式也很简单.<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"> <span class="comment">&lt;!-- 私有独立进程:与主进程同ShareUID,共享data目录、组件信息、共享内存数据  --&gt;</span></span><br><span class="line"> <span class="tag">&lt;<span class="name">activity</span></span></span><br><span class="line"><span class="tag">            <span class="attr">android:name</span>=<span class="string">".WebActivity"</span></span></span><br><span class="line"><span class="tag">            <span class="attr">android:process</span>=<span class="string">":web"</span>/&gt;</span></span><br><span class="line"><span class="comment">&lt;!-- 全局独立进程:与主进程不同ShareUID --&gt;</span></span><br><span class="line"> <span class="tag">&lt;<span class="name">activity</span></span></span><br><span class="line"><span class="tag">            <span class="attr">android:name</span>=<span class="string">".WebActivity"</span></span></span><br><span class="line"><span class="tag">            <span class="attr">android:process</span>=<span class="string">".web"</span>/&gt;</span></span><br></pre></td></tr></table></figure></p>
+<p>本项目使用的是第一种方法,因为只与本应用通信,所以不需要为全局独立进程.<br><a id="more"></a></p>
+<h2 id="进程间通信"><a href="#进程间通信" class="headerlink" title="进程间通信"></a>进程间通信</h2><p>进程间的通信方式:</p>
+<ol>
+<li>Bundle</li>
+<li>文件共享</li>
+<li>AIDL</li>
+<li>Messager</li>
+<li>ContentProvider</li>
+<li>Socket</li>
+</ol>
+<p>当打开网页时,发送请求应该带用户信息,原来的信息存储方式是SharePreference,但是这种方式对于多进程调用时,容易出现不稳定的情况,并且它的多进程调用方式已经被标记为废弃,所以为了保证稳定性,使用ContentProvider将其封装,供不同的进程调用.<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 在 web 进程里只是获取用户信息,当web里返回要登录信息时,跳转至主进程里的登录页面,所以只实现了 query 方法,更新 SharePreference 依旧使用了单进程读写模式.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">UserProvider</span> <span class="keyword">extends</span> <span class="title">ContentProvider</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> String sAuthoriry = BuildConfig.APPLICATION_ID + <span class="string">".UserProvider"</span>;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">onCreate</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Nullable</span></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Cursor <span class="title">query</span><span class="params">(@NonNull Uri uri, @Nullable String[] projection, @Nullable String selection, @Nullable String[] selectionArgs, @Nullable String sortOrder)</span> </span>&#123;</span><br><span class="line">        <span class="comment">//这个 name 获取的就是 xml 的文件名,默认取 uri 的 path 字段的第一个</span></span><br><span class="line">        <span class="keyword">if</span> (!sAuthoriry.equals(uri.getAuthority())) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        Bundle bundle = <span class="keyword">new</span> Bundle();</span><br><span class="line">        <span class="keyword">if</span> (getContext() != <span class="keyword">null</span>) &#123;</span><br><span class="line">            bundle.putString(<span class="string">"user"</span>, SharedPreferUtil.get(getContext(), Constants.EXTRA_USER_CACHE, <span class="string">""</span>));</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> BundleCursor(bundle);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">BundleCursor</span> <span class="keyword">extends</span> <span class="title">MatrixCursor</span> </span>&#123;</span><br><span class="line">        <span class="keyword">private</span> Bundle mBundle;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="title">BundleCursor</span><span class="params">(Bundle extras)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">super</span>(<span class="keyword">new</span> String[]&#123;&#125;, <span class="number">0</span>);</span><br><span class="line">            mBundle = extras;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> Bundle <span class="title">getExtras</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> mBundle;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> Bundle <span class="title">respond</span><span class="params">(Bundle extras)</span> </span>&#123;</span><br><span class="line">            mBundle = extras;</span><br><span class="line">            <span class="keyword">return</span> mBundle;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Nullable</span></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">getType</span><span class="params">(@NonNull Uri uri)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> UnsupportedOperationException(<span class="string">"No external call"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Nullable</span></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Uri <span class="title">insert</span><span class="params">(@NonNull Uri uri, @Nullable ContentValues values)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> UnsupportedOperationException(<span class="string">"No external call"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">delete</span><span class="params">(@NonNull Uri uri, @Nullable String selection, @Nullable String[] selectionArgs)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> UnsupportedOperationException(<span class="string">"No external call"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">update</span><span class="params">(@NonNull Uri uri, @Nullable ContentValues values, @Nullable String selection, @Nullable String[] selectionArgs)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> UnsupportedOperationException(<span class="string">"No external call"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>AndroidManifest.xml 配置<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!-- 由于只与本应用通信所以就没有配置权限 --&gt;</span></span><br><span class="line"> <span class="tag">&lt;<span class="name">provider</span></span></span><br><span class="line"><span class="tag">            <span class="attr">android:name</span>=<span class="string">".provider.UserProvider"</span></span></span><br><span class="line"><span class="tag">            <span class="attr">android:authorities</span>=<span class="string">"$&#123;applicationId&#125;.UserProvider"</span></span></span><br><span class="line"><span class="tag">            <span class="attr">android:exported</span>=<span class="string">"true"</span> /&gt;</span></span><br></pre></td></tr></table></figure></p>
+<p>这样就配置好了多进程读取 SharePreference 的 ContentProvider,凡是读取用户信息的地方都需替换为如下方式<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Nullable</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> User <span class="title">getUser</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    String authority = <span class="string">"content://"</span> + BuildConfig.APPLICATION_ID + <span class="string">".UserProvider"</span>;</span><br><span class="line">    Uri uri = Uri.parse(authority);</span><br><span class="line">    <span class="comment">//由于多进程模式,所以 Application 会多次初始化,MyApplication.getInstance() 的初始化不能写在某个进程里,如果这样则其他进程获取不到实例,导致这里会出现NPE</span></span><br><span class="line">    Cursor cursor = MyApplication.getInstance().getContentResolver().query(uri, <span class="keyword">null</span>, <span class="keyword">null</span>, <span class="keyword">null</span>, <span class="keyword">null</span>);</span><br><span class="line">    <span class="keyword">if</span> (cursor != <span class="keyword">null</span>) &#123;</span><br><span class="line">        Bundle args = cursor.getExtras();</span><br><span class="line">        cursor.close();</span><br><span class="line">        <span class="keyword">if</span> (args != <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> User.stringToUser(args.getString(<span class="string">"user"</span>));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>通过以上配置,就可以在不同进程里获取User对象.<br>我们业务中有个逻辑是分享网页,当用户点击网页分享按钮,调起分享页面,然后分享至微信,分享成功返回后调用 js,所以需要在微信回调中通知网页,使用BroadcastReceiver通知网页执行 js 脚本.</p>
+<h2 id="多进程注意事项"><a href="#多进程注意事项" class="headerlink" title="多进程注意事项"></a>多进程注意事项</h2><ol>
+<li>静态成员和单例模式会失效</li>
+<li>线程同步机制失效</li>
+<li>SharePreference 稳定性不能保证,使用 ContentProvider 封装,对外提供数据服务</li>
+<li>Application 会多次创建,需要注意多进程间使用的对象是否初始化<br>在 web 进程中调用主进程功能都需要注意 Context 和数据的读取,否则会出现空指针的问题.<h1 id="主进程保活"><a href="#主进程保活" class="headerlink" title="主进程保活"></a>主进程保活</h1>在完成进程拆分后测试中发现,当主进程占用一百多 MB 时红米 Note3 机器打开网页进程,再消耗一百多 MB时,系统会自动杀死主进程,导致返回到主进程会再次加载,为了避免这种问题发生,只能在网页进程启动后,将主进程置为前台进程.<br>进程保活话题如果要展开谈,可以写好多东西,这里只介绍我们应用的方法.逻辑很简单就是在主进程中启动一个前台 Service,然后再启动一个相同 ID 的 Service,最后停止一个 Service,这样通知栏里便不会出现通知,而应用在前台 oom_adj 值较高,进程不会被杀死.<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">KeepLiveService</span> <span class="keyword">extends</span> <span class="title">Service</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> NOTIFICATION_ID = <span class="number">0x11</span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">KeepLiveService</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> IBinder <span class="title">onBind</span><span class="params">(Intent intent)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> UnsupportedOperationException(<span class="string">"Not yet implemented"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>.onCreate();</span><br><span class="line">        <span class="keyword">if</span> (Build.VERSION.SDK_INT &lt; Build.VERSION_CODES.JELLY_BEAN_MR2) &#123;</span><br><span class="line">            <span class="comment">//API 18 以下，直接发送 Notification 并将其置为前台</span></span><br><span class="line">            startForeground(NOTIFICATION_ID, <span class="keyword">new</span> Notification());</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="comment">//API 18 以上，发送 Notification 并将其置为前台后，启动 InnerService</span></span><br><span class="line">            Notification.Builder builder = <span class="keyword">new</span> Notification.Builder(<span class="keyword">this</span>);</span><br><span class="line">            builder.setSmallIcon(R.drawable.push);</span><br><span class="line">            startForeground(NOTIFICATION_ID, builder.build());</span><br><span class="line">            ContextCompat.startForegroundService(getApplicationContext(), <span class="keyword">new</span> Intent(<span class="keyword">this</span>, InnerService<span class="class">.<span class="keyword">class</span>))</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">InnerService</span> <span class="keyword">extends</span> <span class="title">Service</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="title">InnerService</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> IBinder <span class="title">onBind</span><span class="params">(Intent intent)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="keyword">super</span>.onCreate();</span><br><span class="line">            <span class="comment">//发送与 KeepLiveService 中I D 相同的 Notification，然后取消自己的前台显示</span></span><br><span class="line">            Notification.Builder builder = <span class="keyword">new</span> Notification.Builder(<span class="keyword">this</span>);</span><br><span class="line">            builder.setSmallIcon(R.drawable.push);</span><br><span class="line">            startForeground(NOTIFICATION_ID, builder.build());</span><br><span class="line">            stopSelf();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>当然 Service 也必须在 AndroidManifest 中注册.</p>
+<h2 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a>注意事项</h2><ol>
+<li>compleVerison 27 targetVersion 26 如果再为更高的版本则通知拦会显示出应用正在后台运行,给用户造成不好的体验</li>
+<li>为了在用户体验和内存消耗间平衡,在 Application 的 onTrimMemory中,当 level 值大于等于 TRIM_MEMORY_MODERATE 且 Web 进程在后台后,主动杀死 web 进程.</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Android/" rel="tag"># Android</a>
+              <a href="/tags/性能调优/" rel="tag"># 性能调优</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/09/10/android-memory-optimization-2/" rel="prev" title="Android 内存优化实践(中)">
+      <i class="fa fa-chevron-left"></i> Android 内存优化实践(中)
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/09/28/android-slideback/" rel="next" title="仿小米返回交互">
+      仿小米返回交互 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    
+  <div class="comments" id="comments">
+    <div id="lv-container" data-id="city" data-uid="MTAyMC8zOTM2OS8xNTg5Ng"></div>
+  </div>
+  
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Web-独立进程"><span class="nav-number">1.</span> <span class="nav-text">Web 独立进程</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#拆分-Web-进程"><span class="nav-number">1.1.</span> <span class="nav-text">拆分 Web 进程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#进程间通信"><span class="nav-number">1.2.</span> <span class="nav-text">进程间通信</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#多进程注意事项"><span class="nav-number">1.3.</span> <span class="nav-text">多进程注意事项</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#主进程保活"><span class="nav-number">2.</span> <span class="nav-text">主进程保活</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#注意事项"><span class="nav-number">2.1.</span> <span class="nav-text">注意事项</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Libery</p>
+  <div class="site-description" itemprop="description">Libery 个人博客</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">27</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="feed-link motion-element">
+    <a href="/atom.xml" rel="alternate">
+      <i class="fa fa-rss"></i>RSS
+    </a>
+  </div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Thewhitelight" title="GitHub → https://github.com/Thewhitelight"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:szq921618920@gmail.com" title="E-Mail → mailto:szq921618920@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 2018 – 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Libery</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://mist.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> v7.5.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script>
+<script src="/js/schemes/muse.js"></script>
+<script src="/js/next-boot.js"></script>
+
+
+
+  
+
+
+
+
+  <script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+  window.livereOptions = {
+    refer: location.pathname.replace(CONFIG.root, '').replace('index.html', '')
+  };
+  (function(d, s) {
+    var j, e = d.getElementsByTagName(s)[0];
+    if (typeof LivereTower === 'function') { return; }
+    j = d.createElement(s);
+    j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+    j.async = true;
+    e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+</script>
+
+</body>
+</html>

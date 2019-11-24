@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.9.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="alternate" href="/atom.xml" title="Libery" type="application/atom+xml">
+  <meta name="google-site-verification" content="aB6L6QXfeQJ_kUJ1peNYbkbkVBGVB_PYD_WDaljjWGo">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/Thewhitelight/Thewhitelight.github.io.git').hostname,
+    root: '/',
+    scheme: 'Mist',
+    version: '7.5.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="项目中需要核验身份信息,所以模拟支付宝的身份证 OCR 界面,做一个类似的功能.但是又有不同的地方,我们需要拍下照片而不是不断的扫描获取图像.由于项目最低支持 4.0 系统为了方便起见使用 Camera 而不是 Camera2 接口,因为 Camera2 是 5.0 以后加入的 api.">
+<meta name="keywords" content="Android,Camera">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用 Camera Api 拍摄身份证">
+<meta property="og:url" content="https://github.com/Thewhitelight/Thewhitelight.github.io.git/2019/02/27/camera-id-card/index.html">
+<meta property="og:site_name" content="Libery">
+<meta property="og:description" content="项目中需要核验身份信息,所以模拟支付宝的身份证 OCR 界面,做一个类似的功能.但是又有不同的地方,我们需要拍下照片而不是不断的扫描获取图像.由于项目最低支持 4.0 系统为了方便起见使用 Camera 而不是 Camera2 接口,因为 Camera2 是 5.0 以后加入的 api.">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://def-201655.cos.ap-shanghai.myqcloud.com/camera_id_card_front.png">
+<meta property="og:updated_time" content="2019-11-24T11:46:47.050Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="使用 Camera Api 拍摄身份证">
+<meta name="twitter:description" content="项目中需要核验身份信息,所以模拟支付宝的身份证 OCR 界面,做一个类似的功能.但是又有不同的地方,我们需要拍下照片而不是不断的扫描获取图像.由于项目最低支持 4.0 系统为了方便起见使用 Camera 而不是 Camera2 接口,因为 Camera2 是 5.0 以后加入的 api.">
+<meta name="twitter:image" content="https://def-201655.cos.ap-shanghai.myqcloud.com/camera_id_card_front.png">
+
+<link rel="canonical" href="https://github.com/Thewhitelight/Thewhitelight.github.io.git/2019/02/27/camera-id-card/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>使用 Camera Api 拍摄身份证 | Libery</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Libery</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <h1 class="site-subtitle" itemprop="description">秋流到冬尽 春流到夏</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+  <a href="https://github.com/Thewhitelight" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/Thewhitelight/Thewhitelight.github.io.git/2019/02/27/camera-id-card/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Libery">
+      <meta itemprop="description" content="Libery 个人博客">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Libery">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          使用 Camera Api 拍摄身份证
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2019-02-27 10:38:12" itemprop="dateCreated datePublished" datetime="2019-02-27T10:38:12+08:00">2019-02-27</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-11-24 19:46:47" itemprop="dateModified" datetime="2019-11-24T19:46:47+08:00">2019-11-24</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/技术/" itemprop="url" rel="index">
+                    <span itemprop="name">技术</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>项目中需要核验身份信息,所以模拟支付宝的身份证 OCR 界面,做一个类似的功能.但是又有不同的地方,我们需要拍下照片而不是不断的扫描获取图像.<br>由于项目最低支持 4.0 系统为了方便起见使用 Camera 而不是 Camera2 接口,因为 Camera2 是 5.0 以后加入的 api.<br><a id="more"></a></p>
+<h3 id="请求相机权限"><a href="#请求相机权限" class="headerlink" title="请求相机权限"></a>请求相机权限</h3><p>打开相机需要<code>&lt;uses-permission android:name=&quot;android.permission.CAMERA&quot; /&gt;</code>权限,并且相机权限也是运行时权限,需要在打开相机前动态请求.</p>
+<h3 id="请求存储权限"><a href="#请求存储权限" class="headerlink" title="请求存储权限"></a>请求存储权限</h3><p>因为 sample 中使用了 cache 目录,所以不需要请求存储权限,如果使用外部存储,则需要请求运行时权限.</p>
+<h3 id="调用相机接口"><a href="#调用相机接口" class="headerlink" title="调用相机接口"></a>调用相机接口</h3><ol>
+<li>创建预览界面，使用 SurfaceView 绘制实时预览图像,现在推荐使用 TextureView,关于两者的特性和区别不再赘述,文末有参考文章,<br>由于相机镜头是横向的,所以需要设置相机预览为竖屏<code>camera.setDisplayOrientation(90);</code>,在拍照页面退出时也需要及时释放相机资源.</li>
+<li><strong>调整预览尺寸、调整图片尺寸</strong> 这个是拍照关键<br>我们所要实现的功能是全屏预览,相机预览尺寸是从它所支持的规格里面选择,而不是我们自身决定,而不同手机又有不同屏幕的比例,所以我们需要在手机预览尺寸匹配到一个最相近的尺寸,设置为相机的预览尺寸.<br>匹配算法:<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@NonNull</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> Point <span class="title">machBestSize</span><span class="params">(Camera.Parameters parameters, Point screenResolution, List&lt;Camera.Size&gt; supportedSizes)</span> </span>&#123;</span><br><span class="line">        <span class="comment">//降序排列</span></span><br><span class="line">        List&lt;Camera.Size&gt; supportedPreviewSizes = <span class="keyword">new</span> ArrayList&lt;Camera.Size&gt;(supportedSizes);</span><br><span class="line">        Collections.sort(supportedPreviewSizes, <span class="keyword">new</span> Comparator&lt;Camera.Size&gt;() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">compare</span><span class="params">(Camera.Size a, Camera.Size b)</span> </span>&#123;</span><br><span class="line">                <span class="keyword">int</span> aPixels = a.height * a.width;</span><br><span class="line">                <span class="keyword">int</span> bPixels = b.height * b.width;</span><br><span class="line">                <span class="keyword">if</span> (bPixels &lt; aPixels) &#123;</span><br><span class="line">                    <span class="keyword">return</span> -<span class="number">1</span>;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">if</span> (bPixels &gt; aPixels) &#123;</span><br><span class="line">                    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">        <span class="comment">//打印镜头支持的预览尺寸</span></span><br><span class="line">        <span class="keyword">if</span> (Log.isLoggable(TAG, Log.INFO)) &#123;</span><br><span class="line">            StringBuilder previewSizesString = <span class="keyword">new</span> StringBuilder();</span><br><span class="line">            <span class="keyword">for</span> (Camera.Size supportedPreviewSize : supportedPreviewSizes) &#123;</span><br><span class="line">                previewSizesString.append(supportedPreviewSize.width).append(<span class="string">'x'</span>).append(supportedPreviewSize.height).append(<span class="string">' '</span>);</span><br><span class="line">            &#125;</span><br><span class="line">            Log.i(TAG, <span class="string">"Supported preview sizes: "</span> + previewSizesString);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">double</span> screenAspectRatio = (<span class="keyword">double</span>) screenResolution.x / (<span class="keyword">double</span>) screenResolution.y;</span><br><span class="line"></span><br><span class="line">        Iterator&lt;Camera.Size&gt; it = supportedPreviewSizes.iterator();</span><br><span class="line">        <span class="keyword">while</span> (it.hasNext()) &#123;</span><br><span class="line">            Camera.Size supportedPreviewSize = it.next();</span><br><span class="line">            <span class="keyword">int</span> realWidth = supportedPreviewSize.width;</span><br><span class="line">            <span class="keyword">int</span> realHeight = supportedPreviewSize.height;</span><br><span class="line">            <span class="comment">//MIN_PREVIEW_PIXELS = 480 * 320 移除过小的尺寸</span></span><br><span class="line">            <span class="keyword">if</span> (realWidth * realHeight &lt; MIN_PREVIEW_PIXELS) &#123;</span><br><span class="line">                it.remove();</span><br><span class="line">                <span class="keyword">continue</span>;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">boolean</span> isCandidatePortrait = realWidth &lt; realHeight;</span><br><span class="line">            <span class="keyword">int</span> maybeFlippedWidth = isCandidatePortrait ? realHeight : realWidth;</span><br><span class="line">            <span class="keyword">int</span> maybeFlippedHeight = isCandidatePortrait ? realWidth : realHeight;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">double</span> aspectRatio = (<span class="keyword">double</span>) maybeFlippedWidth / (<span class="keyword">double</span>) maybeFlippedHeight;</span><br><span class="line">            <span class="keyword">double</span> distortion = Math.abs(aspectRatio - screenAspectRatio);</span><br><span class="line">            <span class="comment">// MAX_ASPECT_DISTORTION = 1.5 异常纵横比偏差过大的尺寸</span></span><br><span class="line">            <span class="keyword">if</span> (distortion &gt; MAX_ASPECT_DISTORTION) &#123;</span><br><span class="line">                it.remove();</span><br><span class="line">                <span class="keyword">continue</span>;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (maybeFlippedWidth == screenResolution.x &amp;&amp; maybeFlippedHeight == screenResolution.y) &#123;</span><br><span class="line">                Point exactPoint = <span class="keyword">new</span> Point(realWidth, realHeight);</span><br><span class="line">                Log.i(TAG, <span class="string">"Found preview size exactly matching screen size: "</span> + exactPoint);</span><br><span class="line">                <span class="keyword">return</span> exactPoint;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">//在没有匹配到最优结果情况下的兜底策略</span></span><br><span class="line">        <span class="keyword">if</span> (!supportedPreviewSizes.isEmpty()) &#123;</span><br><span class="line">            Camera.Size largestPreview = supportedPreviewSizes.get(<span class="number">0</span>);</span><br><span class="line">            Point largestSize = <span class="keyword">new</span> Point(largestPreview.width, largestPreview.height);</span><br><span class="line">            Log.i(TAG, <span class="string">"Using largest suitable preview size: "</span> + largestSize);</span><br><span class="line">            <span class="keyword">return</span> largestSize;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">//在没有获取预览尺寸列表下的兜底策略</span></span><br><span class="line">        Camera.Size defaultPreview = parameters.getPictureSize();</span><br><span class="line">        Point defaultSize = <span class="keyword">new</span> Point(defaultPreview.width, defaultPreview.height);</span><br><span class="line">        Log.i(TAG, <span class="string">"No suitable preview sizes, using default: "</span> + defaultSize);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> defaultSize;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>通过这个算法我们就可以匹配到相近的相机预览尺寸,但是还必须匹配拍照尺寸,因为预览尺寸和照片尺寸是两个不同的逻辑,如果只匹配到预览尺寸,有的手机会匹配到一个过小的照片尺寸,这样就无法看清图片信息.<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Point pictureSize = findBestPictureSizeValue(parameters, cameraResolution);</span><br><span class="line"><span class="comment">//设置拍照尺寸</span></span><br><span class="line">parameters.setPictureSize(pictureSize.x, pictureSize.y);</span><br><span class="line">camera.setParameters(parameters);</span><br></pre></td></tr></table></figure></p>
+<p>这样就可以和手机自带的相机全屏模式下预览效果一样了</p>
+<h3 id="拍照、剪裁、压缩、保存"><a href="#拍照、剪裁、压缩、保存" class="headerlink" title="拍照、剪裁、压缩、保存"></a>拍照、剪裁、压缩、保存</h3><p>为了方便OCR,所以我们将图片进行剪裁至身份证大小,对于过大的尺寸压缩至复合我们要求,保存成文件方便上传至服务器.<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//拍照</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> fun <span class="title">takePhoto</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    val camera = cameraManager.camera</span><br><span class="line">    <span class="comment">//只需要获取 jpeg 格式图片</span></span><br><span class="line">    camera.takePicture(<span class="keyword">null</span>, <span class="keyword">null</span>, Camera.PictureCallback &#123; data, _ -&gt;</span><br><span class="line">        <span class="keyword">var</span> resource = BitmapFactory.decodeByteArray(data, <span class="number">0</span>, data.size)</span><br><span class="line">        <span class="keyword">if</span> (resource == <span class="keyword">null</span>) &#123;</span><br><span class="line">            Toast.makeText(<span class="keyword">this</span><span class="meta">@CameraActivity</span>, <span class="string">"拍照失败"</span>,Toast.LENGTH_SHORT).show()</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> (canCrop) &#123;</span><br><span class="line">                <span class="comment">//剪裁图片至身份证大小</span></span><br><span class="line">                resource = cropImage(resource)</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">//保存图片至文件</span></span><br><span class="line">            val path = saveBitmap(resource)</span><br><span class="line">            <span class="keyword">if</span> (path.isNotEmpty()) &#123;</span><br><span class="line">                Log.e(<span class="string">"photo saved in path:"</span>, path)</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                Toast.makeText(<span class="keyword">this</span><span class="meta">@CameraActivity</span>, <span class="string">"照片保存失败"</span>,Toast.LENGTH_SHORT).show()</span><br><span class="line">            &#125;</span><br><span class="line">            val intent = Intent()</span><br><span class="line">            intent.putExtra(<span class="string">"imagePath"</span>, path)</span><br><span class="line">            setResult(Activity.RESULT_OK, intent)</span><br><span class="line">            finish()</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 剪裁图片 通过计算身份证框与屏幕的距离 确定图片剪裁的范围</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> fun <span class="title">cropImage</span><span class="params">(resource: Bitmap)</span>: Bitmap </span>&#123;</span><br><span class="line">    val ratio = resource.width / (height * <span class="number">1.0</span>)</span><br><span class="line">    val pictureWidth = dp2px(<span class="number">450</span>) * ratio</span><br><span class="line">    val pictureHeight = dp2px(<span class="number">282</span>) * ratio</span><br><span class="line">    val x = (resource.width - pictureWidth) / <span class="number">2</span></span><br><span class="line">    val y = (resource.height - pictureHeight) / <span class="number">2</span></span><br><span class="line">    val bitmap = Bitmap.createBitmap(resource, x.toInt(), y.toInt(),pictureWidth.toInt(), pictureHeight.toInt())</span><br><span class="line">    <span class="keyword">if</span> (pictureWidth &gt; maxWidth) &#123;</span><br><span class="line">        val originRatio = (pictureWidth / (pictureHeight * <span class="number">1.0</span>)).toFloat()</span><br><span class="line">        val matrix = Matrix()</span><br><span class="line">        matrix.postScale(originRatio, originRatio)</span><br><span class="line">        <span class="keyword">return</span> Bitmap.createScaledBitmap(bitmap, maxWidth, (maxWidth /originRatio).toInt(), <span class="keyword">true</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> bitmap</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//保存图片至缓存目录,不需要请求存储权限</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> fun <span class="title">saveBitmap</span><span class="params">(resource: Bitmap)</span>: String </span>&#123;</span><br><span class="line">    val picturePathName = cacheDir.absolutePath + File.separator +System.currentTimeMillis() + <span class="string">".jpg"</span></span><br><span class="line">    val file = File(picturePathName)</span><br><span class="line">    <span class="keyword">var</span> result = <span class="string">""</span></span><br><span class="line">    <span class="keyword">var</span> isSuccess = <span class="keyword">false</span></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        val fos = FileOutputStream(file)</span><br><span class="line">        isSuccess = resource.compress(Bitmap.CompressFormat.JPEG, <span class="number">100</span>, fos)</span><br><span class="line">        fos.flush()</span><br><span class="line">        fos.close()</span><br><span class="line">        result = file.absolutePath</span><br><span class="line">    &#125; <span class="keyword">catch</span> (e: Exception) &#123;</span><br><span class="line">        e.printStackTrace()</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">if</span> (isSuccess) result <span class="keyword">else</span> <span class="string">""</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>有的手机相机存在预览时画面稍微变形,在相机里用全屏预览时也发现有同样的问题,应该是预览比例和屏幕比例有差别导致的.如果想要预览效果完美匹配,则需要改变预览尺寸而不是固定为屏幕尺寸大小.</p>
+<h3 id="截图"><a href="#截图" class="headerlink" title="截图"></a>截图</h3><p>拍摄国徽页效果图(sample 效果) 如果为人像页则有人像框 <strong>国徽页为正面 人像页为反面</strong><br><img src="https://def-201655.cos.ap-shanghai.myqcloud.com/camera_id_card_front.png" alt></p>
+<h3 id="更新兼容性方案"><a href="#更新兼容性方案" class="headerlink" title="更新兼容性方案"></a>更新兼容性方案</h3><p>经过线上验证存在匹配照片尺寸小于身份证尺寸的问题,导致拍出的图片太小模糊问题.<br>所以启用备用方案,点击拍照时直接通过<code>setOneShotPreviewCallback</code>实时预览回调获取图片数组,然后将数组转化为 Bitmap 供调用方使用.<br>这里需要注意的是 <code>onPreviewFrame</code>里返回的数组是<code>YUV420SP 格式</code>,不能直接通过<code>BitmapFactory</code>生成图片,需要用<code>YuvImage</code>进行转化才可以使用.<br><figure class="highlight java"><figcaption><span>生成 Bitmap</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> fun <span class="title">generateBitmap</span><span class="params">(camera: Camera, data: ByteArray)</span>: Bitmap? </span>&#123;</span><br><span class="line">        val size = camera.parameters.previewSize</span><br><span class="line">        val w = size.width </span><br><span class="line">        val h = size.height</span><br><span class="line">        val image = YuvImage(data, ImageFormat.NV21,</span><br><span class="line">                w, h, <span class="keyword">null</span>)</span><br><span class="line">        val os = ByteArrayOutputStream()</span><br><span class="line">        <span class="keyword">if</span> (!image.compressToJpeg(Rect(<span class="number">0</span>, <span class="number">0</span>, w, h), <span class="number">100</span>, os)) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">null</span></span><br><span class="line">        &#125;</span><br><span class="line">        val tmp = os.toByteArray()</span><br><span class="line">        <span class="keyword">return</span> BitmapFactory.decodeByteArray(tmp, <span class="number">0</span>, tmp.size, BitmapFactory.Options())</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>其他逻辑都不用改变,这种方法通过界面上的所见即所得直接获取图片,以减少适配问题.</p>
+<h3 id="项目地址"><a href="#项目地址" class="headerlink" title="项目地址"></a>项目地址</h3><p><a href="https://github.com/Thewhitelight/Tinder/tree/master/camera">GitHub camera module为此 sample</a></p>
+<h3 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h3><p><a href="https://blog.csdn.net/jinzhuojun/article/details/44062175" target="_blank" rel="noopener">Android 5.0(Lollipop)中的SurfaceTexture，TextureView, SurfaceView和GLSurfaceView</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Android/" rel="tag"># Android</a>
+              <a href="/tags/Camera/" rel="tag"># Camera</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/02/21/install_apk_refer/" rel="prev" title="应用安装版本适配问题">
+      <i class="fa fa-chevron-left"></i> 应用安装版本适配问题
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/03/15/choreographer/" rel="next" title="Android 9.0 Choreographer 原理解析">
+      Android 9.0 Choreographer 原理解析 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    
+  <div class="comments" id="comments">
+    <div id="lv-container" data-id="city" data-uid="MTAyMC8zOTM2OS8xNTg5Ng"></div>
+  </div>
+  
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#请求相机权限"><span class="nav-number">1.</span> <span class="nav-text">请求相机权限</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#请求存储权限"><span class="nav-number">2.</span> <span class="nav-text">请求存储权限</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#调用相机接口"><span class="nav-number">3.</span> <span class="nav-text">调用相机接口</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#拍照、剪裁、压缩、保存"><span class="nav-number">4.</span> <span class="nav-text">拍照、剪裁、压缩、保存</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#总结"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#截图"><span class="nav-number">6.</span> <span class="nav-text">截图</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#更新兼容性方案"><span class="nav-number">7.</span> <span class="nav-text">更新兼容性方案</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#项目地址"><span class="nav-number">8.</span> <span class="nav-text">项目地址</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#参考文章"><span class="nav-number">9.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Libery</p>
+  <div class="site-description" itemprop="description">Libery 个人博客</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">27</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="feed-link motion-element">
+    <a href="/atom.xml" rel="alternate">
+      <i class="fa fa-rss"></i>RSS
+    </a>
+  </div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Thewhitelight" title="GitHub → https://github.com/Thewhitelight"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:szq921618920@gmail.com" title="E-Mail → mailto:szq921618920@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 2018 – 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Libery</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://mist.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> v7.5.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script>
+<script src="/js/schemes/muse.js"></script>
+<script src="/js/next-boot.js"></script>
+
+
+
+  
+
+
+
+
+  <script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+  window.livereOptions = {
+    refer: location.pathname.replace(CONFIG.root, '').replace('index.html', '')
+  };
+  (function(d, s) {
+    var j, e = d.getElementsByTagName(s)[0];
+    if (typeof LivereTower === 'function') { return; }
+    j = d.createElement(s);
+    j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+    j.async = true;
+    e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+</script>
+
+</body>
+</html>
