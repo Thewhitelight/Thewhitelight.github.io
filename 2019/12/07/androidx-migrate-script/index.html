@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.9.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="aB6L6QXfeQJ_kUJ1peNYbkbkVBGVB_PYD_WDaljjWGo">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/Thewhitelight/Thewhitelight.github.io.git').hostname,
+    root: '/',
+    scheme: 'Mist',
+    version: '7.5.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="需求现在 Android 10 早已经发布,当 targetVersion 为29时必须使用 AndroidX 并且现在新建项目时已经必须勾选 AndriodX 选项了,所以需要开始迁移工作了,有些三方库也只提供 AndroidX 版本,我们遇到 QQ 音乐和 GoogleMap 的 SDK 就只提供 AndroidX 版本.如果对于单个工程而言只需要 Refactor-&amp;gt;Migrate t">
+<meta name="keywords" content="Git,Shell">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AndroidX 迁移脚本实现">
+<meta property="og:url" content="https://github.com/Thewhitelight/Thewhitelight.github.io.git/2019/12/07/androidx-migrate-script/index.html">
+<meta property="og:site_name" content="Libery">
+<meta property="og:description" content="需求现在 Android 10 早已经发布,当 targetVersion 为29时必须使用 AndroidX 并且现在新建项目时已经必须勾选 AndriodX 选项了,所以需要开始迁移工作了,有些三方库也只提供 AndroidX 版本,我们遇到 QQ 音乐和 GoogleMap 的 SDK 就只提供 AndroidX 版本.如果对于单个工程而言只需要 Refactor-&amp;gt;Migrate t">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-12-07T08:29:19.170Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="AndroidX 迁移脚本实现">
+<meta name="twitter:description" content="需求现在 Android 10 早已经发布,当 targetVersion 为29时必须使用 AndroidX 并且现在新建项目时已经必须勾选 AndriodX 选项了,所以需要开始迁移工作了,有些三方库也只提供 AndroidX 版本,我们遇到 QQ 音乐和 GoogleMap 的 SDK 就只提供 AndroidX 版本.如果对于单个工程而言只需要 Refactor-&amp;gt;Migrate t">
+
+<link rel="canonical" href="https://github.com/Thewhitelight/Thewhitelight.github.io.git/2019/12/07/androidx-migrate-script/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>AndroidX 迁移脚本实现 | Libery</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Libery</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <h1 class="site-subtitle" itemprop="description">秋流到冬尽 春流到夏</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+  <a href="https://github.com/Thewhitelight" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/Thewhitelight/Thewhitelight.github.io.git/2019/12/07/androidx-migrate-script/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Libery">
+      <meta itemprop="description" content="Libery 个人博客">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Libery">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          AndroidX 迁移脚本实现
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2019-12-07 10:59:16 / 修改时间：16:29:19" itemprop="dateCreated datePublished" datetime="2019-12-07T10:59:16+08:00">2019-12-07</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/技术/" itemprop="url" rel="index">
+                    <span itemprop="name">技术</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="需求"><a href="#需求" class="headerlink" title="需求"></a>需求</h1><p>现在 Android 10 早已经发布,当 targetVersion 为29时必须使用 AndroidX 并且现在新建项目时已经必须勾选 AndriodX 选项了,所以需要开始迁移工作了,有些三方库也只提供 AndroidX 版本,我们遇到 QQ 音乐和 GoogleMap 的 SDK 就只提供 AndroidX 版本.如果对于单个工程而言只需要 Refactor-&gt;Migrate to AndroiX 即可以完成自动迁移,但是对于有更多项目而言使用这样的方式虽然可以完成迁移,但是太过于繁琐,也不好统一 AndroidX 库的版本.为了方便整个团队项目进行迁移,所以使用脚本进行迁移会方便很多.</p>
+<h1 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h1><p>整个流程很简单</p>
+<ol>
+<li>checkout 新分支</li>
+<li>升级新 gradle 版本</li>
+<li>升级 gradle tool 版本</li>
+<li>gradle.properties 添加 AndroidX 支持</li>
+<li>替换工程里所有 support 包名</li>
+<li>替换工程里所有 support 依赖</li>
+<li>添加混淆文件</li>
+</ol>
+<p>梳理完成流程,就可以动手迁移了.需要注意 AndroidX 必须使用 gradle tool 3.2 版本以上,为了保证兼容性,工程当前最好使用 supprot 28 的依赖.<br><a id="more"></a></p>
+<h2 id="checkout-迁移新分支"><a href="#checkout-迁移新分支" class="headerlink" title="checkout 迁移新分支"></a>checkout 迁移新分支</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$(cd .. | git branch androidx_migrate)</span><br><span class="line">$(cd .. | git checkout androidx_migrate)</span><br></pre></td></tr></table></figure>
+<h2 id="升级-gradle-版本"><a href="#升级-gradle-版本" class="headerlink" title="升级 gradle 版本"></a>升级 gradle 版本</h2><p>将 gradle 升级至最新.<code>&gt;/dev/null</code>相当于捕获异常信息.<br><code>./gradlew wrapper --gradle-version 5.4.1 &gt;/dev/null</code></p>
+<h2 id="升级-gradle-tools"><a href="#升级-gradle-tools" class="headerlink" title="升级 gradle tools"></a>升级 gradle tools</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span>(sed -i "" "s/com.android.tools.build:gradle:.*/com.android.tools.build:gradle:3.5.2/g" $&#123;BUILD_FILE&#125;)</span><br></pre></td></tr></table></figure>
+<p><code>${BUILD_FILE}</code>为根目录的<code>build.gradle</code>,替换掉老版本.注意这里的 gradle tool 应该与 gradle 版本对应.</p>
+<h2 id="修改-gradle-properties"><a href="#修改-gradle-properties" class="headerlink" title="修改 gradle.properties"></a>修改 gradle.properties</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">echo '\nandroid.useAndroidX=true</span><br><span class="line">android.enableJetifier=true' &gt;&gt;$PROJECT_DIR/gradle.properties</span><br></pre></td></tr></table></figure>
+<p><code>android.useAndroidX=true</code>Android 插件会使用对应的 AndroidX 库（而非支持库）<br><code>android.enableJetifier=true</code>Android 插件会通过重写其二进制文件来自动迁移现有的第三方库以使用 AndroidX</p>
+<h2 id="替换-support-包"><a href="#替换-support-包" class="headerlink" title="替换 support 包"></a>替换 support 包</h2><p>首先应该找到 support 与 androidx 的对应关系,不过 google 已经帮我们整理好这份<a href="https://developer.android.com/jetpack/androidx/migrate/class-mappings" target="_blank" rel="noopener">文档</a>,通过关系命令行替换掉相应的包名就可以了<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">from_pkgs=""</span><br><span class="line">replace=""</span><br><span class="line">while IFS=, read -r from_pkg to_pkg</span><br><span class="line">do</span><br><span class="line">    from_pkgs+=" -e $from_pkg"</span><br><span class="line">    replace+="; s/$from_pkg/$to_pkg/g"</span><br><span class="line">done &lt;&lt;&lt; "$(tail -n +2 $MAPPING_FILE)"</span><br><span class="line"></span><br><span class="line">rg --files-with-matches -t java -t kotlin -t xml -F $from_pkgs $PROJECT_DIR | xargs perl -pi -e "$replace"</span><br></pre></td></tr></table></figure></p>
+<p><code>$MAPPING_FILE)</code>为 androidx_class_map.csv 的目录,这个文件就是 gooogle 提供的文档,但是用官方的文件出现了替换后对应不正确的问题,我自己改变下文件里的顺序后,则可以正常使用了.<br><code>$(tail -n +2 $MAPPING_FILE)</code>相当于<code>cat</code>只是从第2行读取到文件结尾.因为第1行非 support 对应关系.<br><code>replace+=&quot;; s/$from_pkg/$to_pkg/g&quot;</code>是用来进行替换的规则,使用过<code>sed</code>就可以理解这个操作.意为将本行里的<code>$to_pkg</code>替换为<code>$from_pkg</code>,当有多个内容替换时用<code>;</code>分隔.<br><code>rg</code>是比<code>find</code>更快的搜索工具.通过<code>rg</code>搜索到我们需要替换的文件类型,它内置了很多文件类型,文末参考里有详细教程.<code>xml</code>里的布局也需要替换掉,所以也需要把包含 support 包的相关文件搜索出来.<br><code>xargs</code>是给其他命令传递参数的一个过滤器，也是组合多个命令的一个工具.<br><code>perl</code>的正则支持比<code>sed</code>好很多,所以使用它可以少踩很多正则上的坑.</p>
+<h2 id="替换-support-依赖"><a href="#替换-support-依赖" class="headerlink" title="替换 support 依赖"></a>替换 support 依赖</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">from_pkgs=""</span><br><span class="line">replace=""</span><br><span class="line">while IFS=, read -r from_pkg to_pkg</span><br><span class="line">do</span><br><span class="line">    from_pkgs+=" -e $from_pkg"</span><br><span class="line">    replace+="; s/(\"|')$from_pkg.*(\"|')/\"$to_pkg\"/g"</span><br><span class="line">    #如果使用sed 正则就需要写成这种形式,太过繁琐了</span><br><span class="line">    #replace+="; s/\(\\\"\|'\)$from_pkg.*\(\\\"\|'\)/\\\"$to_pkg\\\"/g"</span><br><span class="line">done &lt;&lt;&lt; "$(tail -n +2 $ARTIFACT_MAPPING_FILE)"</span><br><span class="line"></span><br><span class="line">rg --files-with-matches -t groovy -F $from_pkgs $PROJECT_DIR | xargs perl -pi -e "$replace"</span><br></pre></td></tr></table></figure>
+<p>和替换 support 包的代码差不多,只是换了读取的文件,只是这里的正则稍有稍有不同.<br>在项目里会有各种形式的依赖写法如<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">api &quot;com.android.support:support-v4:$&#123;rootProject.ext.supportLibVersion&#125;&quot;</span><br><span class="line">api &quot;com.android.support:support-v4:28.0.0&quot;</span><br><span class="line">api &apos;com.android.support:support-v4:28.0.0&apos;</span><br></pre></td></tr></table></figure></p>
+<p>所以需要<code>(&quot;|&#39;)package.*(&quot;|&#39;)</code>匹配所有的形式去替换成我们需要的版本.<br><code>$ARTIFACT_MAPPING_FILE</code>为依赖的映射文件.<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Old build artifact,AndroidX build artifact</span><br><span class="line">com.android.support:support-v4:,androidx.legacy:legacy-support-v4:1.0.0</span><br></pre></td></tr></table></figure></p>
+<p>这里的<code>1.0.0</code>则可以写成统一的依赖版本.比如<code>${rootProject.ext.v4Version}</code>这样对于便于统一版本管理.</p>
+<h2 id="混淆文件"><a href="#混淆文件" class="headerlink" title="混淆文件"></a>混淆文件</h2><p>由于包名变化所以需要新增混淆文件如<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">-dontwarn com.google.android.material.**</span><br><span class="line">-keep class com.google.android.material.** &#123; *; &#125;</span><br><span class="line"></span><br><span class="line">-dontwarn androidx.**</span><br><span class="line">-keep class androidx.** &#123; *; &#125;</span><br><span class="line">-keep interface androidx.** &#123; *; &#125;</span><br></pre></td></tr></table></figure></p>
+<p>总结<br>至此就完成这个那个项目迁移,整个过程根据工程大小会耗时几到几十秒钟,大量的时间消耗在升级 gradle,检索替换文件耗时很少.掌握一些脚本可以极大的提高我们的开发效率.<br><a href="https://github.com/Thewhitelight/androidx_migrate_scripts">迁移脚本源码</a></p>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a href="https://www.hi-linux.com/posts/29245.html" target="_blank" rel="noopener">rg 教程</a><br><a href="https://developer.android.com/jetpack/androidx" target="_blank" rel="noopener">官方迁移文档</a><br><a href="https://gist.github.com/loganj/7535a13e98be83460f362b63dbd13e07" target="_blank" rel="noopener">参考迁移脚本</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Git/" rel="tag"># Git</a>
+              <a href="/tags/Shell/" rel="tag"># Shell</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/11/18/git-commit-message-generate-changelog/" rel="prev" title="提取 Git Messages 生成 ChangeLog">
+      <i class="fa fa-chevron-left"></i> 提取 Git Messages 生成 ChangeLog
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    
+  <div class="comments" id="comments">
+    <div id="lv-container" data-id="city" data-uid="MTAyMC8zOTM2OS8xNTg5Ng"></div>
+  </div>
+  
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#需求"><span class="nav-number">1.</span> <span class="nav-text">需求</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#解决方案"><span class="nav-number">2.</span> <span class="nav-text">解决方案</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#checkout-迁移新分支"><span class="nav-number">2.1.</span> <span class="nav-text">checkout 迁移新分支</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#升级-gradle-版本"><span class="nav-number">2.2.</span> <span class="nav-text">升级 gradle 版本</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#升级-gradle-tools"><span class="nav-number">2.3.</span> <span class="nav-text">升级 gradle tools</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#修改-gradle-properties"><span class="nav-number">2.4.</span> <span class="nav-text">修改 gradle.properties</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#替换-support-包"><span class="nav-number">2.5.</span> <span class="nav-text">替换 support 包</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#替换-support-依赖"><span class="nav-number">2.6.</span> <span class="nav-text">替换 support 依赖</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#混淆文件"><span class="nav-number">2.7.</span> <span class="nav-text">混淆文件</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考"><span class="nav-number">3.</span> <span class="nav-text">参考</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Libery"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Libery</p>
+  <div class="site-description" itemprop="description">Libery 个人博客</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">28</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Thewhitelight" title="GitHub → https://github.com/Thewhitelight"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:szq921618920@gmail.com" title="E-Mail → mailto:szq921618920@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 2018 – 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Libery</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://mist.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> v7.5.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script>
+<script src="/js/schemes/muse.js"></script>
+<script src="/js/next-boot.js"></script>
+
+
+
+  
+
+
+
+
+  <script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+  window.livereOptions = {
+    refer: location.pathname.replace(CONFIG.root, '').replace('index.html', '')
+  };
+  (function(d, s) {
+    var j, e = d.getElementsByTagName(s)[0];
+    if (typeof LivereTower === 'function') { return; }
+    j = d.createElement(s);
+    j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+    j.async = true;
+    e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+</script>
+
+</body>
+</html>
