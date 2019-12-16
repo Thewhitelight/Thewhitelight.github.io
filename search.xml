@@ -354,6 +354,7 @@
 <h2 id="全面屏适配-BottomSheet"><a href="#全面屏适配-BottomSheet" class="headerlink" title="全面屏适配 BottomSheet"></a>全面屏适配 BottomSheet</h2><p>我们的项目已经适配过全面屏了,适配方式也很简单,在 AndroidManifest 文件中添加<code>&lt;meta-data 
     android:name=&quot;android.max_aspect&quot;
     android:value=&quot;2.1&quot;/&gt;</code>,但是在使用 BottomSheetDialog 时出现了意想不到的结果,如下图所示<br><img src="https://def-201655.cos.ap-shanghai.myqcloud.com/ic_android_tips_bottomsheet.png" alt>在最屏幕地步出现了布局上移的情况,而移动的距离正好是屏幕圆角的开始地方.<br><strong>解决办法:</strong><br>使用 BottomSheetDialogFragment 可以避免这个问题.</p>
+<h2 id="快速添加简单动画"><a href="#快速添加简单动画" class="headerlink" title="快速添加简单动画"></a>快速添加简单动画</h2><p>当我们设置 View 的可见与不可见时感觉太生硬，可以给父布局添加<code>android:animateLayoutChanges=&quot;true&quot;</code>属性,当然这种适用于很简单的动画,这个属性开启了默认的<code>LayoutTransition</code>.它有五种类型对应不同的动作.</p>
 ]]></content>
       <categories>
         <category>技术</category>
