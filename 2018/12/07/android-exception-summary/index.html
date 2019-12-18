@@ -57,7 +57,7 @@
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://def-201655.cos.ap-shanghai.myqcloud.com/exception_timeout.png">
 <meta property="og:image" content="https://def-201655.cos.ap-shanghai.myqcloud.com/ic_android_exception_ndk.png">
-<meta property="og:updated_time" content="2019-12-18T13:04:29.130Z">
+<meta property="og:updated_time" content="2019-12-18T13:05:56.650Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Android 开发异常总结">
 <meta name="twitter:description" content="在开发过程中遇到各种不太常见的问题,在此记录. 运行时异常Android 8.1 apk 安装权限问题 android.permission.ACCESS_ALL_DOWNLOADStargetVersion 28 应用内更新安装 apk 如果没有添加flag将会引起以下错误,在华为 8.1.0(27) 系统遇到此问题,但是三星 8.0(26) 系统则没有,估计是内部处理逻辑不同吧.1234567">
@@ -245,7 +245,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2019-12-18 21:04:29" itemprop="dateModified" datetime="2019-12-18T21:04:29+08:00">2019-12-18</time>
+                <time title="修改时间：2019-12-18 21:05:56" itemprop="dateModified" datetime="2019-12-18T21:05:56+08:00">2019-12-18</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -288,7 +288,6 @@
 <li>对于 9.0 多进程使用 WebView 也作出了重大改变,可以参考<a href="https://developer.android.com/about/versions/pie/android-9.0-changes-28#web-data-dirs" target="_blank" rel="noopener">行为变更</a>里的建议修改</li>
 </ul>
 <h2 id="资源文件统一存放-不能随意申明否则会导致-FileNotFoundException"><a href="#资源文件统一存放-不能随意申明否则会导致-FileNotFoundException" class="headerlink" title="资源文件统一存放,不能随意申明否则会导致 FileNotFoundException"></a>资源文件统一存放,不能随意申明否则会导致 FileNotFoundException</h2><p>项目图片资源文件都在 xhdpi 下,但是由于多模块间引用,有时候不去依赖模块而是直接在自己模块里申明<code>&lt;item name=&quot;test&quot;  type=&quot;drawable&quot;/&gt;</code>一下,在屏幕分辨率高于 xhdpi 的手机上是正常运行,但是在低于这个屏幕分辨率下,就会直接读取了空的申明资源,导致会抛出<code>java.io.FileNotFoundException</code>.</p>
-<p>`</p>
 <h1 id="编译异常"><a href="#编译异常" class="headerlink" title="编译异常"></a>编译异常</h1><h2 id="SSL异常"><a href="#SSL异常" class="headerlink" title="SSL异常"></a>SSL异常</h2><p>电脑开着代理后,AS编译时有新的三方库更新时,会提示SSL错误<br>解决办法:关闭代理,重启AS(必须 command+q 退出AS)</p>
 <h2 id="app-transformNativeLibsWithStripDebugSymbolForProduceRelease-not-found-mips64el-linux-android-strip"><a href="#app-transformNativeLibsWithStripDebugSymbolForProduceRelease-not-found-mips64el-linux-android-strip" class="headerlink" title="app:transformNativeLibsWithStripDebugSymbolForProduceRelease, not found mips64el-linux-android-strip"></a>app:transformNativeLibsWithStripDebugSymbolForProduceRelease, not found mips64el-linux-android-strip</h2><p>项目环境 AS 3.2.1, Gradle 3.0.1, NDK 17, 配置 NDK 后出现如下异常<img src="https://def-201655.cos.ap-shanghai.myqcloud.com/ic_android_exception_ndk.png" alt>打开异常里抛出的文件路径发现没有找到这个文件,原因是 17 里删除了这个配置.<br>解决办法:</p>
 <ol>
