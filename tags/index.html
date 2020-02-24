@@ -16,36 +16,10 @@
 
 <link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
 
-
 <script id="hexo-configurations">
-  var NexT = window.NexT || {};
-  var CONFIG = {
-    hostname: new URL('https://github.com/Thewhitelight/Thewhitelight.github.io.git').hostname,
-    root: '/',
-    scheme: 'Mist',
-    version: '7.5.0',
-    exturl: false,
-    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
-    copycode: {"enable":false,"show_result":false,"style":null},
-    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
-    bookmark: {"enable":false,"color":"#222","save":"auto"},
-    fancybox: false,
-    mediumzoom: false,
-    lazyload: false,
-    pangu: false,
-    algolia: {
-      appID: '',
-      apiKey: '',
-      indexName: '',
-      hits: {"per_page":10},
-      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
-    },
-    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
-    path: 'search.xml',
-    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
-    sidebarPadding: 40
-  };
-</script>
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"github.com","root":"/","scheme":"Mist","version":"7.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
 
   <meta name="description" content="Libery 个人博客">
 <meta property="og:type" content="website">
@@ -67,9 +41,7 @@
   CONFIG.page = {
     sidebar: "",
     isHome: false,
-    isPost: false,
-    isPage: true,
-    isArchive: false
+    isPost: false
   };
 </script>
 
@@ -113,6 +85,14 @@
 
     <header class="header" itemscope itemtype="http://schema.org/WPHeader">
       <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
   <div class="site-meta">
 
     <div>
@@ -126,11 +106,9 @@
       
   </div>
 
-  <div class="site-nav-toggle">
-    <div class="toggle" aria-label="切换导航栏">
-      <span class="toggle-line toggle-line-first"></span>
-      <span class="toggle-line toggle-line-middle"></span>
-      <span class="toggle-line toggle-line-last"></span>
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
     </div>
   </div>
 </div>
@@ -173,9 +151,9 @@
     <i class="fa fa-search"></i>
   </span>
   <div class="search-input-container">
-    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+    <input autocomplete="off" autocorrect="off" autocapitalize="off"
            placeholder="搜索..." spellcheck="false"
-           type="text" id="search-input">
+           type="search" class="search-input">
   </div>
   <span class="popup-btn-close">
     <i class="fa fa-times-circle"></i>
@@ -232,10 +210,10 @@
       <div class="post-body">
           <div class="tag-cloud">
             <div class="tag-cloud-title">
-              目前共计 21 个标签
+              目前共计 22 个标签
             </div>
             <div class="tag-cloud-tags">
-              <a href="/tags/Android/" style="font-size: 30px; color: #111">Android</a> <a href="/tags/AspectJ/" style="font-size: 12px; color: #ccc">AspectJ</a> <a href="/tags/Camera/" style="font-size: 12px; color: #ccc">Camera</a> <a href="/tags/Flutter/" style="font-size: 16.5px; color: #9d9d9d">Flutter</a> <a href="/tags/Git/" style="font-size: 16.5px; color: #9d9d9d">Git</a> <a href="/tags/GitHub/" style="font-size: 12px; color: #ccc">GitHub</a> <a href="/tags/Intellij-Plugin/" style="font-size: 16.5px; color: #9d9d9d">Intellij Plugin</a> <a href="/tags/Javassist/" style="font-size: 12px; color: #ccc">Javassist</a> <a href="/tags/OKHttp/" style="font-size: 12px; color: #ccc">OKHttp</a> <a href="/tags/React-Native/" style="font-size: 12px; color: #ccc">React Native</a> <a href="/tags/Shell/" style="font-size: 16.5px; color: #9d9d9d">Shell</a> <a href="/tags/兼容性问题/" style="font-size: 12px; color: #ccc">兼容性问题</a> <a href="/tags/开发Tips/" style="font-size: 12px; color: #ccc">开发Tips</a> <a href="/tags/异常回顾/" style="font-size: 12px; color: #ccc">异常回顾</a> <a href="/tags/性能调优/" style="font-size: 21px; color: #6f6f6f">性能调优</a> <a href="/tags/源码解析/" style="font-size: 12px; color: #ccc">源码解析</a> <a href="/tags/版本适配/" style="font-size: 25.5px; color: #404040">版本适配</a> <a href="/tags/算法/" style="font-size: 16.5px; color: #9d9d9d">算法</a> <a href="/tags/编程技巧/" style="font-size: 16.5px; color: #9d9d9d">编程技巧</a> <a href="/tags/译文/" style="font-size: 12px; color: #ccc">译文</a> <a href="/tags/读书笔记/" style="font-size: 12px; color: #ccc">读书笔记</a>
+              <a href="/tags/Android/" style="font-size: 30px; color: #111">Android</a> <a href="/tags/AspectJ/" style="font-size: 12px; color: #ccc">AspectJ</a> <a href="/tags/Camera/" style="font-size: 12px; color: #ccc">Camera</a> <a href="/tags/Flutter/" style="font-size: 16.5px; color: #9d9d9d">Flutter</a> <a href="/tags/Git/" style="font-size: 16.5px; color: #9d9d9d">Git</a> <a href="/tags/GitHub/" style="font-size: 12px; color: #ccc">GitHub</a> <a href="/tags/Gradle/" style="font-size: 12px; color: #ccc">Gradle</a> <a href="/tags/Intellij-Plugin/" style="font-size: 16.5px; color: #9d9d9d">Intellij Plugin</a> <a href="/tags/Javassist/" style="font-size: 12px; color: #ccc">Javassist</a> <a href="/tags/OKHttp/" style="font-size: 12px; color: #ccc">OKHttp</a> <a href="/tags/React-Native/" style="font-size: 12px; color: #ccc">React Native</a> <a href="/tags/Shell/" style="font-size: 16.5px; color: #9d9d9d">Shell</a> <a href="/tags/兼容性问题/" style="font-size: 12px; color: #ccc">兼容性问题</a> <a href="/tags/开发Tips/" style="font-size: 12px; color: #ccc">开发Tips</a> <a href="/tags/异常回顾/" style="font-size: 12px; color: #ccc">异常回顾</a> <a href="/tags/性能调优/" style="font-size: 21px; color: #6f6f6f">性能调优</a> <a href="/tags/源码解析/" style="font-size: 12px; color: #ccc">源码解析</a> <a href="/tags/版本适配/" style="font-size: 25.5px; color: #404040">版本适配</a> <a href="/tags/算法/" style="font-size: 16.5px; color: #9d9d9d">算法</a> <a href="/tags/编程技巧/" style="font-size: 16.5px; color: #9d9d9d">编程技巧</a> <a href="/tags/译文/" style="font-size: 16.5px; color: #9d9d9d">译文</a> <a href="/tags/读书笔记/" style="font-size: 12px; color: #ccc">读书笔记</a>
             </div>
           </div>
         
@@ -255,10 +233,32 @@
           </div>
           
     
-  <div class="comments" id="comments">
+  <div class="comments">
     <div id="lv-container" data-id="city" data-uid="MTAyMC8zOTM2OS8xNTg5Ng"></div>
   </div>
   
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
 
         </div>
           
@@ -298,7 +298,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">28</span>
+          <span class="site-state-item-count">29</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -311,7 +311,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-count">22</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -344,7 +344,7 @@
 <div class="copyright">
   
   &copy; 2018 – 
-  <span itemprop="copyrightYear">2019</span>
+  <span itemprop="copyrightYear">2020</span>
   <span class="with-love">
     <i class="fa fa-user"></i>
   </span>
@@ -353,7 +353,7 @@
   <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0
   </div>
   <span class="post-meta-divider">|</span>
-  <div class="theme-info">主题 – <a href="https://mist.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> v7.5.0
+  <div class="theme-info">主题 – <a href="https://mist.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> v7.7.1
   </div>
 
         
@@ -365,7 +365,6 @@
 
 
 
-        
       </div>
     </footer>
   </div>
@@ -398,12 +397,12 @@
 
 
 
-
   
 
   
 
 <script>
+NexT.utils.loadComments(document.querySelector('#lv-container'), () => {
   window.livereOptions = {
     refer: location.pathname.replace(CONFIG.root, '').replace('index.html', '')
   };
@@ -415,6 +414,7 @@
     j.async = true;
     e.parentNode.insertBefore(j, e);
   })(document, 'script');
+});
 </script>
 
 </body>

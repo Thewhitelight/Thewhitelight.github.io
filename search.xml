@@ -1,6 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>用 BECAUSE 驯服你的 Gradle 依赖 (译)</title>
+    <url>/2020/02/20/gradle-dependencies-because/</url>
+    <content><![CDATA[<h1 id="译文"><a href="#译文" class="headerlink" title="译文"></a>译文</h1><p>你是否知道可以指定使用某个依赖或者某个版本的依赖的原因.<br>是的,在<a href="https://docs.gradle.org/current/javadoc/org/gradle/api/artifacts/Dependency.html#because-java.lang.String-" target="_blank" rel="noopener">API</a>和<a href="https://docs.gradle.org/current/userguide/declaring_dependencies.html#sec:documenting-dependencies" target="_blank" rel="noopener">DOCS</a>中<br><div class="note info">
+            <p>void because?(@Nullable String reason)</p><p>Sets the reason why this dependency should be used.<br>Since:<br>4.6</p>
+          </div><br><a id="more"></a><br>基本用法如下所示<br><figure class="highlight groovy"><table><tr><td class="code"><pre><span class="line">implementation(<span class="string">"com.blundell:app-auth android:1.2.3"</span>) &#123;</span><br><span class="line">    because <span class="string">"We use fragment auth, original AppAuth library does not support this feature."</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>Gradle 允许你写一两句为什么选择改依赖的句子，并且可以使用以下命令提取该注释，以显示在报告中：<br><code>gradle -q dependencyInsight –dependency app-auth android</code><br>但是这不是我有兴趣使用它的原因！<br>此功能最主要的收益就是使用在敏捷团队中，总有一些使用某种依赖的原因，有时你会坚持使用早前版本以实现兼容性。有时你因为编译时间和没有反射需要使用一个解析库里而不是另一个。有时你需要支持多个国家并且是唯一的依赖，即使他不是标准的做法。<br>所有这个原因通常都会消失在时间的迷雾中，如果幸运的话，它们会出现在 git commit message 中（但是说实话，它们不会首先被检查）。<br>使用 because 函数可以使你对特定的业务决策进行说明，并想团队其他成员明确说明为啥这么做。 与希望/查找/忽略和更改依赖项的人一起节省时间，精力和潜在的错误。<br>所以开始使用它！ 🙂<br><figure class="highlight groovy"><table><tr><td class="code"><pre><span class="line">implementation(<span class="string">"com.blundell:android-blog:1.2.3"</span>) &#123;</span><br><span class="line">    because <span class="string">"If we didn't Blundell might cry."</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h1 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h1><p><a href="https://blog.blundellapps.co.uk/tame-your-gradle-dependencies-just-because/3" target="_blank" rel="noopener">原文地址</a></p>
+]]></content>
+      <categories>
+        <category>技术</category>
+      </categories>
+      <tags>
+        <tag>译文</tag>
+        <tag>Gradle</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>AndroidX 迁移脚本实现</title>
     <url>/2019/12/07/androidx-migrate-script/</url>
     <content><![CDATA[<h1 id="需求"><a href="#需求" class="headerlink" title="需求"></a>需求</h1><p>现在 Android 10 早已经发布,当 targetVersion 为29时必须使用 AndroidX 并且现在新建项目时已经必须勾选 AndriodX 选项了,所以需要开始迁移工作了,有些三方库也只提供 AndroidX 版本,我们遇到 QQ 音乐和 GoogleMap 的 SDK 就只提供 AndroidX 版本.如果对于单个工程而言只需要 Refactor-&gt;Migrate to AndroiX 即可以完成自动迁移,但是对于有更多项目而言使用这样的方式虽然可以完成迁移,但是太过于繁琐,也不好统一 AndroidX 库的版本.为了方便整个团队项目进行迁移,所以使用脚本进行迁移会方便很多.</p>
