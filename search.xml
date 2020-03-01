@@ -131,7 +131,7 @@
       </tags>
   </entry>
   <entry>
-    <title>ReactNatvie中使用 @ReactMethod 和 @ReactProp 应注意的问题</title>
+    <title>ReactNative 中使用 @ReactMethod 和 @ReactProp 应注意的问题</title>
     <url>/2019/10/14/react-natvie-manager-abstractclass/</url>
     <content><![CDATA[<h4 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h4><p>公司项目中使用 React Native 实现部分功能,因为业务需求问题,比如 A 和 B 分别继承 ReactContextBaseJavaModule 且其 ReactMethod 所注解的方法也相同,但是其实现略有不同,这时候正常做法是会写抽象类或者说接口,这时候 ReactMethod 应该写在那里呢,如果在父类或者接口里,运行起来会发现找不到这个方法,如果写在实现类里会很麻烦.<br><a id="more"></a></p>
 <h4 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h4><h5 id="实现类的方法里加-ReactMethod"><a href="#实现类的方法里加-ReactMethod" class="headerlink" title="实现类的方法里加 ReactMethod"></a>实现类的方法里加 ReactMethod</h5><p>这种方式就很麻烦不够优雅,但是可以立马解决问题.</p>
