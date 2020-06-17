@@ -188,6 +188,88 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/Thewhitelight/Thewhitelight.github.io.git/2018/09/10/android-memory-optimization-2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Libery">
+      <meta itemprop="description" content="Libery 个人博客">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Libery">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2018/09/10/android-memory-optimization-2/" class="post-title-link" itemprop="url">Android 内存优化实践(中)</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-09-10 15:02:46" itemprop="dateCreated datePublished" datetime="2018-09-10T15:02:46+08:00">2018-09-10</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-11-24 19:46:47" itemprop="dateModified" datetime="2019-11-24T19:46:47+08:00">2019-11-24</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/技术/" itemprop="url" rel="index"><span itemprop="name">技术</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>上一篇从图片加载和布局方面分析怎样优化内存,这样可以解决大部分的 OOM 问题了,但是为了尽可能小的占用内存,我们还需要从其他方面入手,不光是从编程角度,还需要在业务方面配合.</p>
+<h1 id="ViewPager-页面使用懒加载"><a href="#ViewPager-页面使用懒加载" class="headerlink" title="ViewPager 页面使用懒加载"></a>ViewPager 页面使用懒加载</h1><p>在首页、搜索等页面中需要使用 ViewPager 承载不同 Fragment,并且有的需要 ViewPager 嵌套 ViewPager,如果进入 Activity 就加载 Fragment 会消耗大量资源,如网络请求、内存、布局绘制耗时耗内存,对用户而言需要等待造成不好的体验.所以需要使用懒加载方式以减少网络请求、布局绘制等不必要的消耗.<br>懒加载的思路就是首次Fragment加载进Activity不可见的时候不初始化布局和请求网络,让Fragment切换为可见时,再加载布局、请求网络,这样就避免首次打开Activity卡顿和消耗不必要内存.在 Fragment 重写<code>setUserVisibleHint(boolean isVisibleToUser)</code>方法便可以获取到,Fragment 是否用户可见.<br>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2018/09/10/android-memory-optimization-2/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://github.com/Thewhitelight/Thewhitelight.github.io.git/2018/09/03/android-memory-optimization/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -928,91 +1010,6 @@
   
   
 
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://github.com/Thewhitelight/Thewhitelight.github.io.git/2018/07/20/clean-code-2/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Libery">
-      <meta itemprop="description" content="Libery 个人博客">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Libery">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2018/07/20/clean-code-2/" class="post-title-link" itemprop="url">Clean Code 阅读笔记(2)</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2018-07-20 15:19:54" itemprop="dateCreated datePublished" datetime="2018-07-20T15:19:54+08:00">2018-07-20</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2019-11-24 19:46:47" itemprop="dateModified" datetime="2019-11-24T19:46:47+08:00">2019-11-24</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/读书笔记/" itemprop="url" rel="index"><span itemprop="name">读书笔记</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="系统"><a href="#系统" class="headerlink" title="系统"></a>系统</h2><ul>
-<li>将系统的构造与使用分开，如依赖注入(DI)、控制反转(IoC)</li>
-<li>保证系统良好的的扩容性，使用面向切面编程(AOP)方式编程</li>
-</ul>
-<p>对于系统这章不能透彻理解，平时对于架构没有深入理解，系统应该是随着业务的变化而变化，没必要先做大设计而限制后续设计思路，保证大概可工作的最简单方案即最合适。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2018/07/20/clean-code-2/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
   </div>
 
   
@@ -1085,7 +1082,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">31</span>
+          <span class="site-state-item-count">32</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -1098,7 +1095,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-count">24</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
