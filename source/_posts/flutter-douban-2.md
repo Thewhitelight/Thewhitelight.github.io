@@ -107,7 +107,7 @@ class _MyAppState extends State<MyApp> {
 ```
 
 ##### iOS 端实现 由于自己不会 Object-C 所以代码很简单,很容易看懂
-{% codeblock lang:objc %}
+&#123;% codeblock lang:objc %&#125;
 #import "FlutterToastPlugin.h"
 
 @implementation FlutterToastPlugin
@@ -156,7 +156,7 @@ class _MyAppState extends State<MyApp> {
 }
 
 @end
-{% endcodeblock %}
+&#123;% endcodeblock %&#125;
 若第一次把 package 运行在 iOS 端会提示错误,按照提示依次执行 `brew install cocoapods` 和 `pod setup` ,等待安装完成后,再次运行就可以在模拟器查看效果了.
 
 ##### Flutter 桥接代码实现

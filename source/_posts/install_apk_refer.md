@@ -24,9 +24,11 @@ categories:
 ```
 ### 6.0
 
-{% note info %} 首先要申请运行时读写权限 {% endnote %}
+&#123;% note info %&#125; 首先要申请运行时读写权限 &#123;% endnote %&#125;
 获得授权后,如果使用上述代码打开安装页面则会抛出下面的错误
-{% note danger %} Caused by: android.content.ActivityNotFoundException: No Activity found to handle Intent { act=android.intent.action.VIEW dat=content: typ=application/vnd.android.package-archive flg=0x10000000 } {% endnote %}
+&#123;% note danger %&#125; 
+Caused by: android.content.ActivityNotFoundException: No Activity found to handle Intent { act=android.intent.action.VIEW dat=content: typ=application/vnd.android.package-archive flg=0x10000000 } 
+&#123;% endnote %&#125;
 应为在 6.0 中 `downloadManager.getUriForDownloadedFile(downloadId)` 获取的 uri 为 content://downloads/my_downloads/109 这种格式,显然这不是个文件地址路径导致上面的报错*,**但这个问题只存在于 6.0**,所以需要针对 6.0 版本进行判断处理
 ``` java
  if (Build.VERSION_CODES.M == Build.VERSION.SDK_INT) {
@@ -56,7 +58,9 @@ categories:
 
 ### 7.0
 
-{% note info %} 对于面向 Android 7.0 的应用,Android 框架执行的 StrictMode API 政策禁止在您的应用外部公开 file:// URI。如果一项包含文件 URI 的 intent 离开您的应用，则应用出现故障，并出现 FileUriExposedException 异常。 {% endnote %}
+&#123;% note info %&#125; 
+对于面向 Android 7.0 的应用,Android 框架执行的 StrictMode API 政策禁止在您的应用外部公开 file:// URI。如果一项包含文件 URI 的 intent 离开您的应用，则应用出现故障，并出现 FileUriExposedException 异常。 
+&#123;% endnote %&#125;
 具体做法 可以参考 [关于 Android 7.0 适配中 FileProvider 部分的总结](http://yifeng.studio/2017/05/03/android-7-0-compat-fileprovider/)
 
 ### 8.0以上

@@ -9,11 +9,11 @@ tags:
 我们业务的 SDK 包含 ReactNative 方案,所以必须依赖 React Native 的 AAR，但是最近对接的客户有自己依赖的版本，和我们使用的版本不同，所以需要我们的 React Nativ 代码运行在他们使用的版本上。
 # 问题
 当 React Native 版本和 Native 版本不一致时，会弹出红框提示
-{% note danger %}
+&#123;% note danger %&#125;
 React Native version mismatch.
 JavaScript version:0.xx.x
 Native Version:0.xx.x
-{% endnote %}
+&#123;% endnote %&#125;
 # 解决方法
 根据提示在源码里搜索发现，来自于[Libraries/Core/ReactNativeVersionCheck.js](https://github.com/facebook/react-native/blob/aee88b6843cea63d6aa0b5879ad6ef9da4701846/Libraries/Core/ReactNativeVersionCheck.js)这个文件里，根据文件注释可以看出是专门做版本校验
 <!-- more -->
