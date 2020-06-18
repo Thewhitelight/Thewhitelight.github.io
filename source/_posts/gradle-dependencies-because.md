@@ -10,6 +10,7 @@ categories:
 # 译文
 你是否知道可以指定使用某个依赖或者某个版本的依赖的原因.
 是的,在[API](https://docs.gradle.org/current/javadoc/org/gradle/api/artifacts/Dependency.html#because-java.lang.String)和[DOCS](https://docs.gradle.org/current/userguide/declaring_dependencies.html#sec:documenting-dependencies)中
+
 {% note info %}
 void because?(@Nullable String reason)
 
@@ -17,6 +18,7 @@ Sets the reason why this dependency should be used.
 Since:
 4.6
 {% endnote %}
+
 <!-- more -->
 基本用法如下所示
 ``` groovy
