@@ -1,7 +1,7 @@
 language: node_js
 sudo: required
 node_js: 
-  - '10'
+  - 11.1.0
 cache:
   directories:
     - node_modules
@@ -10,19 +10,18 @@ branches:
   only:
     - hexo 
 
-before_install:
-  - npm install -g hexo-cli
-
 install:
   - npm install
-  - npm install hexo-deployer-git --save
 
 script:
   - hexo clean
   - hexo generate
 
 after_script:
+  - cd ./public
+  - git init
   - git config user.name "libery"
   - git config user.email "szq921618920@gmail.com"
-  - sed -i "s/gh_token/${GITHUB_TOKEN}/g" ./_config.yml
-  - hexo deploy
+  - git add .
+  - git commit -m "TravisCI"
+  - git push --force --quiet "https://${GITHUB_TOKEN}@github.com/Thewhitelight/Thewhitelight.github.io.git" master:master
