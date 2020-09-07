@@ -84,7 +84,7 @@ sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid
 解决办法:
 关闭代理,点击 File->invalidate Caches/Restart 重启 AS
 
-Error occurred while communicating with CMake server. Check log /Users/libery_tuya/Company/react-native/ReactAndroid/.externalNativeBuild/cmake/debug/armeabi/cmake_server_log.txt for additional information.
+Error occurred while communicating with CMake server. Check log /Users/***/Company/react-native/ReactAndroid/.externalNativeBuild/cmake/debug/armeabi/cmake_server_log.txt for additional information.
 
 ## 打混淆包后,有包名被改为类似`a.a.a`
 
