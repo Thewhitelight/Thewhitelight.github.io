@@ -14,6 +14,8 @@ React Native 版本迭代速度相对较快，所以在使用过程中就会遇�
 # 方案
 
 对于 React Native Android 代码升级，最简单的就是将所有源码覆盖，然而事情并没有想的这么简单。
+
+<!-- more -->
 # 问题
 
 1. React Native js 端版本校验
