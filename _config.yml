@@ -78,8 +78,10 @@ theme: next
 ## Docs: https://hexo.io/docs/deployment.html
 deploy:
   type: git
-  repo: https://gh_token@github.com/Thewhitelight/Thewhitelight.github.io.git
+  repo: git@github.com:Thewhitelight/Thewhitelight.github.io.git
   branch: master
+  name: Libery
+  email: szq921618920@gmail.com
 
 search:
   path: search.xml
