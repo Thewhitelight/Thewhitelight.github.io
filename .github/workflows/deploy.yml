@@ -56,4 +56,4 @@ jobs:
 
       - name: Deploy
         run: |
-          npm install . && npx hexo clean && npx hexo generate && gulp && npx hexo deploy
+          npm install . && npx hexo clean && npx hexo generate && npx hexo deploy
