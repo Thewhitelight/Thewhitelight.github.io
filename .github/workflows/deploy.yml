@@ -3,7 +3,7 @@ name: HEXO CI
 on:
   push:
     branches:
-    - hexo
+    - master
 
 jobs:
   build:
