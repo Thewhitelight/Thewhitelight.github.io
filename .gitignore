@@ -1,4 +1,12 @@
-/node_modules
-package-lock.json
-db.json
 .DS_Store
+Thumbs.db
+db.json
+*.log
+node_modules/
+public/
+.deploy*/
+_multiconfig.yml
+/.deploy_git
+/public
+db.json
+package-lock.json

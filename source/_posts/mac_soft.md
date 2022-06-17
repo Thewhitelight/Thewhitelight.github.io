@@ -5,7 +5,6 @@ tags:
     - mac 
 categories:
     - mac
-    - soft
 ---
 # 日常装机软件
 
