@@ -28,8 +28,8 @@ jobs:
           echo "$DEPLOY_KEY" > ~/.ssh/blogDeploy
           chmod 600 ~/.ssh/blogDeploy
           ssh-keyscan github.com >> ~/.ssh/known_hosts
-          git config --global user.name "<Thewhitelight>"
-          git config --global user.email "<szq921618920@email.address>"
+          git config --global user.name "libery"
+          git config --global user.email "szq921618920@email.com"
       - name: Install dependencies
         run: |
           npm i -g hexo-cli
