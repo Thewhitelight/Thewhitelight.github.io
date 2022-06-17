@@ -28,10 +28,6 @@ jobs:
           echo "$DEPLOY_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan github.com >> ~/.ssh/known_hosts
-          echo "=============1"
-          cat ~/.ssh/id_rsa
-          echo "=============2"
-          cat ~/.ssh/known_hosts
           git config --global user.name "libery"
           git config --global user.email "szq921618920@email.com"
       - name: Install dependencies
