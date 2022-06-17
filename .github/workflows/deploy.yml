@@ -25,11 +25,12 @@ jobs:
           DEPLOY_KEY: ${{secrets.DEPLOY_KEY}}
         run: |
           mkdir -p ~/.ssh/
-          echo "$DEPLOY_KEY" > ~/.ssh/blogDeploy
-          chmod 600 ~/.ssh/blogDeploy
+          echo "$DEPLOY_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
           ssh-keyscan github.com >> ~/.ssh/known_hosts
+           echo "=============1"
           cat ~/.ssh/blogDeploy
-          echo "============="
+          echo "=============2"
           cat ~/.ssh/known_hosts
           git config --global user.name "libery"
           git config --global user.email "szq921618920@email.com"
