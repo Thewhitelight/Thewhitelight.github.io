@@ -29,6 +29,7 @@ jobs:
           chmod 600 ~/.ssh/blogDeploy
           ssh-keyscan github.com >> ~/.ssh/known_hosts
           cat ~/.ssh/blogDeploy
+          echo "============="
           cat ~/.ssh/known_hosts
           git config --global user.name "libery"
           git config --global user.email "szq921618920@email.com"
