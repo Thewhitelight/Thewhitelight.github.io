@@ -1,63 +1,39 @@
-name: Deploy My_Blog  #自动化的名称
+name: HEXO CI
 
 on:
-  # Triggers the workflow on push or pull request events but only for the main branch
-  push: # push的时候触发
-    branches: [ hexo ]  # 哪些分支需要触发
+  push:
+    branches:
+    - hexo
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  Blog_CI-CD:
-    runs-on: ubuntu-latest  # 服务器环境
-    # Steps represent a sequence of tasks that will be executed as part of the job
-    
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [14.x]
+
     steps:
-      # 检查代码
-      - name: Checkout
-        uses: actions/checkout@v2  #软件市场的名称
-        with: # 参数
-          submodules: true
-          persist-credentials: false
-          
-      - name: Setup Node.js
-       # 设置 node.js 环境
+      - uses: actions/checkout@v1
+
+      - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
         with:
-          node-version: '12'
-          
-      - name: Cache node modules
-      # 设置包缓存目录，避免每次下载
-        uses: actions/cache@v1
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          
-      # 配置Hexo环境 
-      - name: Setup Hexo
+          node-version: ${{ matrix.node-version }}
+
+      - name: Configuration environment
         env:
-          ACTION_DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+          HEXO_DEPLOY_PRI: ${{secrets.DEPLOY_KEY}}
         run: |
-          npm install hexo-cli -g
-          npm install
-           
-      
-      # 生成静态文件
-      - name: Build
+          mkdir -p ~/.ssh/
+          echo "$DEPLOY_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          git config --global user.name "<Thewhitelight>"
+          git config --global user.email "<szq921618920@email.address>"
+      - name: Install dependencies
         run: |
-          hexo clean 
-          hexo g
-        
-      # 2、部署到 GitHub Pages
-      - name: upload GitHub repository
-        env: 
-          # Github 仓库
-          GITHUB_REPO: github.com/Thewhitelight/Thewhitelight.github.io
-         # 将编译后的博客文件推送到指定仓库
+          npm i -g hexo-cli
+          npm i
+      - name: Deploy hexo
         run: |
-          cd ./public && git init && git add .
-          git config user.name "Thewhitelight"       #Thewhitelight改为你github的用户名
-          git config user.email "szq921618920@gmail.com"     #Thewhitelight改为你github的注册邮箱
-          git add .
-          git commit -m "GitHub Actions Auto Builder at $(date +'%Y-%m-%d %H:%M:%S')"
-          git push --force --quiet "https://${{ secrets.DEPLOY_KEY }}@$GITHUB_REPO" master:master
+          hexo clean && hexo generate && hexo deploy
