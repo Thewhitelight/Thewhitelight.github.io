@@ -26,7 +26,7 @@ If you haven't changed this prop yourself, this usually means that your versions
 ```
 # 解决方案
 
-1. 在[React Native 版本校验](https://libery.cn/2020/05/11/react-native-check-version/)篇文章中简析了版本校验过程，所以首先要去除校验逻辑，这个逻辑需要在 js 端去除，这样在开发阶段就不会出现相应的报错
+1. 在[React Native 版本校验](https://blog.libery.one/2020/05/11/react-native-check-version/)篇文章中简析了版本校验过程，所以首先要去除校验逻辑，这个逻辑需要在 js 端去除，这样在开发阶段就不会出现相应的报错
 2. 出现这个问题是因为 React Native 对于会对于 View 有属性校验，这段校验逻辑出现在 verifyPropTypes.js 
 
 ``` verifyPropTypes.js 
