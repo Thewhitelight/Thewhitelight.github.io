@@ -11,5 +11,5 @@ Disallow: /fonts/
 Disallow: /vendors/
 Disallow: /fancybox/
 
-Sitemap: https://libery.cn/sitemap.xml
-Sitemap: https://libery.cn/baidusitemap.xml
+Sitemap: https://blog.libery.one/sitemap.xml
+Sitemap: https://blog.libery.one/baidusitemap.xml
