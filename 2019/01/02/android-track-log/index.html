@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.jpg">
+  <link rel="mask-icon" href="/images/favicon.jpg" color="#222">
+  <meta name="google-site-verification" content="OCkUcHhLZvU-4KBNBCcqSy9LH5oJdIATI5fG0_UixKA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.libery.one","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="在查看同事写的代码时,发现各种方法调用有点混乱,不易快速梳理逻辑.所以想着是否可以通过打印方法日志,从而观察各种方法间的调用逻辑. 需求 打印方法名称、入参、耗时、返回值 对项目所有方法生效 可以自定义排除不打印的类 可作为三方库">
+<meta property="og:type" content="article">
+<meta property="og:title" content="利用 AOP 对方法添加监控日志">
+<meta property="og:url" content="https://blog.libery.one/2019/01/02/android-track-log/index.html">
+<meta property="og:site_name" content="Libery">
+<meta property="og:description" content="在查看同事写的代码时,发现各种方法调用有点混乱,不易快速梳理逻辑.所以想着是否可以通过打印方法日志,从而观察各种方法间的调用逻辑. 需求 打印方法名称、入参、耗时、返回值 对项目所有方法生效 可以自定义排除不打印的类 可作为三方库">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://api.bintray.com/packages/light/Android/trace/images/download.svg">
+<meta property="og:image" content="https://def-201655.cos.ap-shanghai.myqcloud.com/ic_analysis_trace.png">
+<meta property="article:published_time" content="2019-01-02T02:34:18.000Z">
+<meta property="article:modified_time" content="2023-09-29T10:05:14.814Z">
+<meta property="article:author" content="Libery">
+<meta property="article:tag" content="Android">
+<meta property="article:tag" content="AspectJ">
+<meta property="article:tag" content="Javassist">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://api.bintray.com/packages/light/Android/trace/images/download.svg">
+
+<link rel="canonical" href="https://blog.libery.one/2019/01/02/android-track-log/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>利用 AOP 对方法添加监控日志 | Libery</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-5GNBDXECTB"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-5GNBDXECTB');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Libery</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">秋流到冬尽 春流到夏</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/Thewhitelight" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.libery.one/2019/01/02/android-track-log/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Libery">
+      <meta itemprop="description" content="Libery 个人博客">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Libery">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          利用 AOP 对方法添加监控日志
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2019-01-02 11:34:18" itemprop="dateCreated datePublished" datetime="2019-01-02T11:34:18+09:00">2019-01-02</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-09-29 19:05:14" itemprop="dateModified" datetime="2023-09-29T19:05:14+09:00">2023-09-29</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF/" itemprop="url" rel="index"><span itemprop="name">技术</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在查看同事写的代码时,发现各种方法调用有点混乱,不易快速梳理逻辑.所以想着是否可以通过打印方法日志,从而观察各种方法间的调用逻辑.</p>
+<h4 id="需求"><a href="#需求" class="headerlink" title="需求"></a>需求</h4><ol>
+<li>打印方法名称、入参、耗时、返回值</li>
+<li>对项目所有方法生效</li>
+<li>可以自定义排除不打印的类</li>
+<li>可作为三方库<span id="more"></span></li>
+</ol>
+<h4 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h4><p>本项目使用 Javassist 实现了以下需求.</p>
+<h5 id="AspectJ"><a href="#AspectJ" class="headerlink" title="AspectJ"></a>AspectJ</h5><p>这个功能让我想起了 JakeWharton 大神的 hugo 库,通过 AspectJ 对添加注解的方法插入 Log 在调用的时候就可以观察调用顺序及参数.但是这个库不能满足所有方法的打印,只能对添加了注解的方法打印,手动给方法添加注解工程量太大.但是可以通过改造切入点<code> @Pointcut(&quot;execution(* &quot; + BuildConfig.PACKAGE_NAME + &quot;..*.*(..))  BuildConfig.PACKAGE_NAME 为项目包名</code> 使其切入包内所有方法,这样便可以打印所有方法,但是这样又不能满足作为第三方库的问题,因为注解值必须是静态常量,不能动态修改.本项目借鉴了 hugo 库部分思想.在<a target="_blank" rel="noopener" href="https://github.com/Thewhitelight/Analysis">Github</a> 中有使用 AspectJ 实现部分需求,并且可以切入 Kotlin.<br>Aspectj 本身语法很简单,应该是最容易上手的 AOP 框架,但是对 Kotlin 支持有问题,关于这个可以参考沪江网校对 AspectJ 改造的开源项目,其支持了更多功能,文后参考中有给出相关链接.</p>
+<h5 id="Javassist"><a href="#Javassist" class="headerlink" title="Javassist"></a>Javassist</h5><p>Javassist 是一个开源的分析、编辑和创建 Java 字节码 的类库 .性能较 ASM 差,跟 cglib 差不多,但是使用相对简单.<br>为了方便引用所以采用 gradle plugin 方式,方便调用者快速添加到原有项目中去.关于编写插件的教程网络有很多,不做过多介绍.</p>
+<h6 id="TraceExtension-自定义-plugin-配置"><a href="#TraceExtension-自定义-plugin-配置" class="headerlink" title="TraceExtension 自定义 plugin 配置"></a>TraceExtension 自定义 plugin 配置</h6><figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">TraceExtension</span> &#123;</span><br><span class="line">    <span class="comment">//需要排除的类</span></span><br><span class="line">    List&lt;String&gt; classExcludes = <span class="keyword">new</span> ArrayList&lt;&gt;()</span><br><span class="line">    <span class="comment">//需要排除的包</span></span><br><span class="line">    List&lt;String&gt; packageExcludes = <span class="keyword">new</span> ArrayList&lt;&gt;()</span><br><span class="line">    <span class="comment">//是否启用</span></span><br><span class="line">    <span class="keyword">def</span> enabled = <span class="literal">true</span></span><br><span class="line">    <span class="comment">//项目包名,并非applicationId</span></span><br><span class="line">    <span class="keyword">def</span> packageName</span><br><span class="line">    <span class="comment">//打印日志的级别</span></span><br><span class="line">    <span class="keyword">def</span> logLevel = <span class="string">&quot;d&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>TraceExtension 定义自定义配置类,方便排除一些简单的工具类调用.</p>
+<h6 id="Trace"><a href="#Trace" class="headerlink" title="Trace"></a>Trace</h6><figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Trace</span> <span class="keyword">implements</span> <span class="title class_">Plugin</span>&lt;Project&gt; &#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="type">void</span> apply(Project project) &#123;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">def</span> hasApp = project.plugins.withType(AppPlugin)</span><br><span class="line">        <span class="keyword">def</span> hasLib = project.plugins.withType(LibraryPlugin)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (!hasApp &amp;&amp; !hasLib) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">&quot;&#x27;android&#x27; or &#x27;android-library&#x27; plugin required.&quot;</span>)</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">final</span> <span class="keyword">def</span> variants</span><br><span class="line">        <span class="keyword">if</span> (hasApp) &#123;</span><br><span class="line">            variants = project.android.applicationVariants</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            variants = project.android.libraryVariants</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">final</span> <span class="keyword">def</span> log = project.logger</span><br><span class="line">        variants.all &#123; variant -&gt;</span><br><span class="line">            <span class="keyword">if</span> (!variant.buildType.isDebuggable()) &#123;</span><br><span class="line">                log.debug(<span class="string">&quot;Skipping non-debuggable build type &#x27;$&#123;variant.buildType.name&#125;&#x27;.&quot;</span>)</span><br><span class="line">                <span class="keyword">return</span></span><br><span class="line">            &#125; <span class="keyword">else</span> <span class="keyword">if</span> (!project.Trace.enabled) &#123;</span><br><span class="line">                log.debug(<span class="string">&quot;Trace is not disabled.&quot;</span>)</span><br><span class="line">                <span class="keyword">return</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        project.extensions.create(<span class="string">&#x27;Trace&#x27;</span>, TraceExtension)</span><br><span class="line"></span><br><span class="line">        println(<span class="string">&quot;=== Trace Plugin ===&quot;</span>)</span><br><span class="line">        <span class="keyword">def</span> android = project.extensions.findByType(AppExtension)</span><br><span class="line">        <span class="comment">//注册 Transform,注入所要插入的代码</span></span><br><span class="line">        android.registerTransform(<span class="keyword">new</span> TraceTransform(project))</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Trace 为自定义的插件,在 release 环境下不需要插入 Log 以免影响性能.</p>
+<h6 id="TraceTransform"><a href="#TraceTransform" class="headerlink" title="TraceTransform"></a>TraceTransform</h6><figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">TraceTransform</span> <span class="keyword">extends</span> <span class="title class_">Transform</span> &#123;</span><br><span class="line"></span><br><span class="line">    Project project</span><br><span class="line"></span><br><span class="line">    TraceTransform(Project project) &#123;</span><br><span class="line">        <span class="variable language_">this</span>.project = project</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    String getName() &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">&quot;TraceTransform&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 需要处理的数据类型</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    Set&lt;QualifiedContent.ContentType&gt; getInputTypes() &#123;</span><br><span class="line">        <span class="keyword">return</span> TransformManager.CONTENT_CLASS</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 需要处理的范围</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    Set&lt;? super QualifiedContent.Scope&gt; getScopes() &#123;</span><br><span class="line">        <span class="comment">// 宿主项目、其子项目及外部引用库</span></span><br><span class="line">        return TransformManager.SCOPE_FULL_PROJECT</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    boolean isIncremental() &#123;</span><br><span class="line">        return false</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    void transform(TransformInvocation transformInvocation) throws TransformException, InterruptedException, IOException &#123;</span><br><span class="line">        super.transform(transformInvocation)</span><br><span class="line">        if (!project.Trace.enabled) &#123;</span><br><span class="line">            return</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        def outputProvider = transformInvocation.outputProvider</span><br><span class="line"></span><br><span class="line">        transformInvocation.inputs.each &#123; TransformInput input -&gt;</span><br><span class="line">            <span class="comment">//宿主项目</span></span><br><span class="line">            input.directoryInputs.each &#123; DirectoryInput directoryInput -&gt;</span><br><span class="line">                <span class="comment">//注入代码</span></span><br><span class="line">                TraceInject.injectDirCode(directoryInput.file.absolutePath, project)</span><br><span class="line">                def dest = outputProvider.getContentLocation(</span><br><span class="line">                        directoryInput.name,</span><br><span class="line">                        directoryInput.contentTypes,</span><br><span class="line">                        directoryInput.scopes,</span><br><span class="line">                        Format.DIRECTORY)</span><br><span class="line">                FileUtils.copyDirectory(directoryInput.file, dest)</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">//第三方jar 虽然对jar没有操作,但是也要输出到out路径 不然运行时会抛错.</span></span><br><span class="line">            input.jarInputs.each &#123; JarInput jarInput -&gt;</span><br><span class="line">                def jarName = jarInput.name</span><br><span class="line">                def md5Name = DigestUtils.md5Hex(jarInput.file.getAbsolutePath())</span><br><span class="line">                if (jarName.endsWith(<span class="string">&quot;.jar&quot;</span>)) &#123;</span><br><span class="line">                    jarName = jarName.substring(<span class="number">0</span>, jarName.length() - <span class="number">4</span>)</span><br><span class="line">                &#125;</span><br><span class="line">                def dest = outputProvider.getContentLocation(</span><br><span class="line">                        jarName + md5Name,</span><br><span class="line">                        jarInput.contentTypes,</span><br><span class="line">                        jarInput.scopes,</span><br><span class="line">                        Format.JAR)</span><br><span class="line">                FileUtils.copyFile(jarInput.file, dest)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们为了在方法中添加 Log 就需要赶在 class 文件被转化为 dex 文件之前去修改类,Tranfrom 注册到插件中便会自动添加到 Task 执行序列中，并且正好是项目被打包成dex之前,不需要像 AspectJ 那用手动添加到最后一个 Task 中去.</p>
+<h6 id="TraceInject-插入-Log"><a href="#TraceInject-插入-Log" class="headerlink" title="TraceInject 插入 Log"></a>TraceInject 插入 Log</h6><figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">TraceInject</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> String TAG = <span class="string">&quot;Trace&quot;</span></span><br><span class="line">    <span class="keyword">static</span> ClassPool POOL = ClassPool.getDefault()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="type">void</span> injectDirCode(String path, Project project) &#123;</span><br><span class="line">        POOL.appendClassPath(path)</span><br><span class="line">        <span class="comment">//添加 Android SDK 路径</span></span><br><span class="line">        POOL.appendClassPath(project.android.bootClasspath[<span class="number">0</span>].toString())</span><br><span class="line">        File dir = <span class="keyword">new</span> File(path)</span><br><span class="line">        <span class="keyword">if</span> (dir.isDirectory()) &#123;</span><br><span class="line">            dir.eachFileRecurse &#123; File file -&gt;</span><br><span class="line">                String filePath = file.absolutePath</span><br><span class="line">                <span class="comment">//排除不需要的系统生成class</span></span><br><span class="line">                <span class="keyword">if</span> (filePath.endsWith(<span class="string">&quot;.class&quot;</span>)</span><br><span class="line">                        &amp;&amp; !filePath.contains(<span class="string">&#x27;R$&#x27;</span>)</span><br><span class="line">                        &amp;&amp; !filePath.contains(<span class="string">&#x27;R.class&#x27;</span>)</span><br><span class="line">                        &amp;&amp; !filePath.contains(<span class="string">&quot;BuildConfig.class&quot;</span>)) &#123;</span><br><span class="line">                    modifyClass(project, path, filePath)</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">static</span> <span class="type">void</span> modifyClass(Project project, String path, String filePath) &#123;</span><br><span class="line">        String classPath</span><br><span class="line">        <span class="keyword">def</span> packageName = project.Trace.packageName</span><br><span class="line">        filePath = filePath.replace(<span class="string">&quot;/&quot;</span>, <span class="string">&quot;.&quot;</span>)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (classExcludes(project, filePath)) &#123;</span><br><span class="line">            <span class="keyword">return</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (packageExcludes(project, filePath)) &#123;</span><br><span class="line">            <span class="keyword">return</span></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (filePath.contains(packageName)) &#123;</span><br><span class="line">            <span class="type">int</span> index = filePath.indexOf(packageName)</span><br><span class="line">            classPath = filePath.substring(index, filePath.length())</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            println(<span class="string">&quot;project can not inject&quot;</span>)</span><br><span class="line">            <span class="keyword">return</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//将路径转化为类名</span></span><br><span class="line">        String className = classPath.substring(<span class="number">0</span>, classPath.length() - <span class="number">6</span>)</span><br><span class="line">                .replace(<span class="string">&#x27;/&#x27;</span>, <span class="string">&#x27;.&#x27;</span>)</span><br><span class="line">                .replace(<span class="string">&#x27;/&#x27;</span>, <span class="string">&#x27;.&#x27;</span>)</span><br><span class="line">        CtClass c = POOL.getCtClass(className)</span><br><span class="line">        <span class="comment">//类需要解冻后便可以修改,否则无法修改</span></span><br><span class="line">        <span class="keyword">if</span> (c.isFrozen()) &#123;</span><br><span class="line">            c.defrost()</span><br><span class="line">        &#125;</span><br><span class="line">        CtMethod[] methods = c.getDeclaredMethods()</span><br><span class="line">        <span class="type">int</span> i = <span class="number">0</span></span><br><span class="line">        <span class="keyword">for</span> (CtMethod <span class="attr">method :</span> methods) &#123;</span><br><span class="line">            <span class="comment">//排除空方法和 native 方法</span></span><br><span class="line">            <span class="keyword">if</span> (method.isEmpty() || Modifier.isNative(method.getModifiers())) &#123;</span><br><span class="line">                <span class="keyword">return</span></span><br><span class="line">            &#125;</span><br><span class="line">            i++</span><br><span class="line">            insertTime(project.Trace.logLevel, className.replace(packageName + <span class="string">&quot;.&quot;</span>, <span class="string">&quot;&quot;</span>), method)</span><br><span class="line">        &#125;</span><br><span class="line">        c.writeFile(path)</span><br><span class="line">        c.detach()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="type">void</span> insertTime(String logLevel, String className, CtMethod method) &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="type">int</span> pos = <span class="number">1</span></span><br><span class="line"></span><br><span class="line">            CodeAttribute codeAttribute = method.getMethodInfo().getCodeAttribute()</span><br><span class="line">            LocalVariableAttribute attribute = (LocalVariableAttribute) codeAttribute.getAttribute(LocalVariableAttribute.tag)</span><br><span class="line">            <span class="type">int</span> size = method.getParameterTypes().length</span><br><span class="line">            String[] paramTypes = <span class="keyword">new</span> String[size]</span><br><span class="line">            <span class="keyword">if</span> (attribute == <span class="literal">null</span>) &#123;</span><br><span class="line">                <span class="keyword">return</span></span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; size; i++) &#123;</span><br><span class="line">                <span class="comment">//获取入参类型</span></span><br><span class="line">                paramTypes[i] = method.getParameterTypes()[i].name</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">def</span> stringType = POOL.getCtClass(<span class="string">&quot;java.lang.String&quot;</span>)</span><br><span class="line">            <span class="keyword">def</span> objType = POOL.getCtClass(<span class="string">&quot;java.lang.Object&quot;</span>)</span><br><span class="line">            <span class="comment">//定义局部变量</span></span><br><span class="line">            method.addLocalVariable(<span class="string">&quot;startTime&quot;</span>, CtClass.longType)</span><br><span class="line">            method.addLocalVariable(<span class="string">&quot;endTime&quot;</span>, CtClass.longType)</span><br><span class="line">            <span class="comment">//打印类名</span></span><br><span class="line">            method.addLocalVariable(<span class="string">&quot;className&quot;</span>, stringType)</span><br><span class="line">            <span class="comment">//打印方法名</span></span><br><span class="line">            method.addLocalVariable(<span class="string">&quot;methodName&quot;</span>, stringType)</span><br><span class="line">            <span class="comment">//打印行号</span></span><br><span class="line">            method.addLocalVariable(<span class="string">&quot;lineNumber&quot;</span>, CtClass.intType)</span><br><span class="line">            <span class="comment">//打印返回值</span></span><br><span class="line">            method.addLocalVariable(<span class="string">&quot;returnObj&quot;</span>, objType)</span><br><span class="line"></span><br><span class="line">            StringBuilder startInjectSB = <span class="keyword">new</span> StringBuilder()</span><br><span class="line">            </span><br><span class="line">            <span class="comment">//*** 省略插入代码</span></span><br><span class="line"></span><br><span class="line">            <span class="comment">//方法前插入 Log</span></span><br><span class="line">            method.insertBefore(startInjectSB.toString())</span><br><span class="line"></span><br><span class="line">            StringBuilder endInjectSB = <span class="keyword">new</span> StringBuilder()</span><br><span class="line">            <span class="comment">//*** 省略插入代码</span></span><br><span class="line"></span><br><span class="line">            <span class="comment">//方法 return 前插入 Log</span></span><br><span class="line">            method.insertAfter(endInjectSB.toString())</span><br><span class="line"></span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">            e.printStackTrace()</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Javassit 语法相对简单,在看过参考文档和一些简单的资料就可以直接上手.</p>
+<h4 id="用法及项目地址"><a href="#用法及项目地址" class="headerlink" title="用法及项目地址"></a>用法及项目地址</h4><figure class="highlight gradle"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">项目 gradle</span><br><span class="line"><span class="keyword">classpath</span> <span class="string">&#x27;cn.libery.analysis:trace:1.0.1&#x27;</span> </span><br><span class="line">module gradle</span><br><span class="line">apply plugin: <span class="string">&#x27;analysis-trace&#x27;</span> </span><br><span class="line">Trace &#123;</span><br><span class="line">        <span class="comment">// 改变配置值后 需要先 clean 项目</span></span><br><span class="line">        <span class="comment">//是否启用插件</span></span><br><span class="line">        enabled <span class="keyword">true</span></span><br><span class="line">        <span class="comment">//包名(非 applicationId)</span></span><br><span class="line">        packageName <span class="string">&quot;cn.libery.analysis.sample&quot;</span></span><br><span class="line">        <span class="comment">//日志等级 和 Logcat 对应</span></span><br><span class="line">        logLevel <span class="string">&quot;i&quot;</span></span><br><span class="line">        <span class="comment">//排除的类,可以是多个</span></span><br><span class="line">        classExcludes = [<span class="string">&quot;cn.libery.analysis.sample.Logger&quot;</span>,</span><br><span class="line">                        <span class="string">&quot;cn.libery.analysis.sample.Logger2&quot;</span>]</span><br><span class="line">        <span class="comment">//排除的包,可以是多个</span></span><br><span class="line">        packageExcludes = [<span class="string">&quot;cn.libery.analysis.sample.test&quot;</span>]</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以参考 Github 中 sample 配置<br><a target="_blank" rel="noopener" href="https://github.com/Thewhitelight/Analysis">Github</a><br> <a target="_blank" rel="noopener" href="https://bintray.com/light/Android/trace/_latestVersion"> <img src="https://api.bintray.com/packages/light/Android/trace/images/download.svg" alt="Download"> </a></p>
+<p><img src="https://def-201655.cos.ap-shanghai.myqcloud.com/ic_analysis_trace.png" alt="效果图"><br>-&gt; 打印入参<br>&lt;- 打印耗时及返回值</p>
+<h4 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h4><p><a target="_blank" rel="noopener" href="https://github.com/HujiangTechnology/gradle_plugin_android_aspectjx">沪江网校 AspectJ</a><br><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/43424242846b">Javassist 使用指南</a><br><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/44d39585fc20">AspectJ 和 Javassist 对比</a><br><a target="_blank" rel="noopener" href="https://www.mekau.com/4880.html">AspectJ 语法</a><br><a target="_blank" rel="noopener" href="https://github.com/JakeWharton/hugo">hugo</a><br><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/44364633/aspectj-doesnt-work-with-kotlin">AspectJ 适配 Kotlin</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Android/" rel="tag"># Android</a>
+              <a href="/tags/AspectJ/" rel="tag"># AspectJ</a>
+              <a href="/tags/Javassist/" rel="tag"># Javassist</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/12/07/android-tips/" rel="prev" title="Android 开发小技巧">
+      <i class="fa fa-chevron-left"></i> Android 开发小技巧
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/02/21/install_apk_refer/" rel="next" title="应用安装版本适配问题">
+      应用安装版本适配问题 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%9C%80%E6%B1%82"><span class="nav-number">1.</span> <span class="nav-text">需求</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0"><span class="nav-number">2.</span> <span class="nav-text">实现</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#AspectJ"><span class="nav-number">2.1.</span> <span class="nav-text">AspectJ</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Javassist"><span class="nav-number">2.2.</span> <span class="nav-text">Javassist</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#TraceExtension-%E8%87%AA%E5%AE%9A%E4%B9%89-plugin-%E9%85%8D%E7%BD%AE"><span class="nav-number">2.2.1.</span> <span class="nav-text">TraceExtension 自定义 plugin 配置</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Trace"><span class="nav-number">2.2.2.</span> <span class="nav-text">Trace</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#TraceTransform"><span class="nav-number">2.2.3.</span> <span class="nav-text">TraceTransform</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#TraceInject-%E6%8F%92%E5%85%A5-Log"><span class="nav-number">2.2.4.</span> <span class="nav-text">TraceInject 插入 Log</span></a></li></ol></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%94%A8%E6%B3%95%E5%8F%8A%E9%A1%B9%E7%9B%AE%E5%9C%B0%E5%9D%80"><span class="nav-number">3.</span> <span class="nav-text">用法及项目地址</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">4.</span> <span class="nav-text">参考</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Libery"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Libery</p>
+  <div class="site-description" itemprop="description">Libery 个人博客</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">37</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">27</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Thewhitelight" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Thewhitelight" rel="noopener" target="_blank"><i class="github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:szq921618920@gmail.com" title="E-Mail → mailto:szq921618920@gmail.com" rel="noopener" target="_blank"><i class="envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2018 – 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Libery</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+</body>
+</html>
